@@ -1,20 +1,24 @@
 # Pitch finder example
+import os
 import librosa
 import numpy as np
 
+path = os.path.dirname(os.path.abspath(__file__))
+audio_path = os.path.join(path, "media/beastling_sing.m4a")
+
 # Load the audio as a waveform `y`
 # Store the sampling rate as `sr`
-y, sr = librosa.load("440hz.wav")
+y, sr = librosa.load(audio_path)
 
 # Estimate fundamental frequency (f0) with probabilistic YIN
 f0, voiced_flag, voiced_probs = librosa.pyin(
-    y, fmin=librosa.note_to_hz("C2"), fmax=librosa.note_to_hz("C7")
+    y, fmin=librosa.note_to_hz("C4"), fmax=librosa.note_to_hz("C7")
 )
 
 # Replace unvoiced frames with NaN
 f0 = np.where(voiced_flag, f0, np.nan)
 
-print(f0)
+# print(f0)
 # notes = librosa.hz_to_note(f0)
 # print(notes)
 
