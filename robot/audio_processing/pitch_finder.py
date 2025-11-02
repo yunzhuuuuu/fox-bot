@@ -66,7 +66,7 @@ def pitch_to_note(f0, min_instances=5):
     return np.array(cleaned_notes)    
 
 if __name__ == "__main__":
-    y, sr = load_audio("media/beastling_sing.wav")
+    y, sr = load_audio("media/output_audio.wav")
     f0 = estimate_pitch(y, sr)
     notes = pitch_to_note(f0, 8)
     # print(f0)
