@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 #     "B": 492,
 # }
 
+
 def load_audio(filename: str):
     """Return waveform (y) and sampling rate (sr) from a file in the current directory."""
     path = os.path.dirname(os.path.abspath(__file__))
@@ -35,9 +36,7 @@ def estimate_pitch(y, sr, fmin_note="C3", fmax_note="C7"):
     Return an array of all recognized frequences.
     """
     f0, voiced_flag, _ = librosa.pyin(
-        y,
-        fmin=librosa.note_to_hz(fmin_note),
-        fmax=librosa.note_to_hz(fmax_note)
+        y, fmin=librosa.note_to_hz(fmin_note), fmax=librosa.note_to_hz(fmax_note)
     )
     return f0[voiced_flag]
 
@@ -63,20 +62,23 @@ def pitch_to_note(f0, min_instances=5):
     if count >= min_instances:
         cleaned_notes.append(notes[-1])
 
-    return np.array(cleaned_notes)    
+    return np.array(cleaned_notes)
+
 
 def check_melody(notes, melody):
     for i in range(len(notes) - len(melody) + 1):
-        if np.array_equal(notes[i:i+len(melody)], melody):
+        if np.array_equal(notes[i : i + len(melody)], melody):
             return True
     return False
+
 
 if __name__ == "__main__":
     y, sr = load_audio("media/output_audio.wav")
     f0 = estimate_pitch(y, sr)
     notes = pitch_to_note(f0, 8)
-    melody = np.array(['A3', 'A#3', 'G3', 'A3', 'D3', 'A3', 'F3', 'C4'])
-    check_melody(notes, melody)
+    melody = np.array(["A3", "A♯3", "G3", "A3", "D3", "A3", "F3", "C4"])
+    is_melody = check_melody(notes, melody)
+    print(is_melody)
     # print(f0)
     print(notes)
 
