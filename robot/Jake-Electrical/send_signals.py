@@ -1,7 +1,7 @@
 import socket
 import time
 
-# Setu[]
+# Setup[]
 ARDUINO_IP = '192.168.137.112' # Arduino IP address
 ARDUINO_PORT = 8081 # Must match 'serverPort' of arduino
 

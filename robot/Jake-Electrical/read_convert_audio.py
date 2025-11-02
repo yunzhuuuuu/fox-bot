@@ -29,7 +29,7 @@ def convert_wav():
         data = f_in.read()
         with wave.open("output_audio.wav", "wb") as f_out:
             f_out.setnchannels(1) # Microphone numbers
-            f_out.setframerate(8000) # Sampling rate
+            f_out.setframerate(3875) # Sampling rate
             f_out.setsampwidth(2) # Number of bytes
             f_out.writeframesraw(data) # Write data to file
 

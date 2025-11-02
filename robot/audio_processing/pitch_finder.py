@@ -72,7 +72,7 @@ def check_melody(notes, melody):
     return False
 
 if __name__ == "__main__":
-    y, sr = load_audio("media/beastling_sing.wav")
+    y, sr = load_audio("media/output_audio.wav")
     f0 = estimate_pitch(y, sr)
     notes = pitch_to_note(f0, 8)
     melody = np.array(['A3', 'A#3', 'G3', 'A3', 'D3', 'A3', 'F3', 'C4'])

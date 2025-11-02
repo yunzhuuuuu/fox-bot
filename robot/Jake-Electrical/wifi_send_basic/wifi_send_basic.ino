@@ -2,74 +2,80 @@
 #include <WiFiUdp.h> 
 
 // User settings
-char ssid[] = "jakewifi"; // WiFi name (SSID)
+char ssid[] = "jakewifi"; // WiFi name 
 char pass[] = "12345678"; // WiFi password
 IPAddress serverAddress(192, 168, 137, 1); // IP of the Python server
-int serverPort = 8080; // Port for Python server
+int serverPort = 8080; // Port of Python server
 
 // Audio setup
-int MIC_PIN = A0;
+const int MIC_PIN_1 = A1;
+const int MIC_PIN_2 = A2;
+const int MIC_PIN_3 = A3;
 const int SAMPLE_RATE = 8000; 
 const int MIC_INTERVAL = 1000000 / SAMPLE_RATE; 
 
-// WiFi buffer configuration
-const int BUFFER_SAMPLES = 730;
-// Each sample is int16_t (2 bytes), so buffer is twice as large in bytes
-const int BUFFER_SIZE_BYTES = BUFFER_SAMPLES * 2; 
+// 243 * 3 channels = 729 total samples.
+const int NUM_SAMPLE_INTERVALS = 243;
+const int NUM_CHANNELS = 3;
+const int TOTAL_BUFFER_SAMPLES = NUM_SAMPLE_INTERVALS * NUM_CHANNELS; // 729
+const int BUFFER_SIZE_BYTES = TOTAL_BUFFER_SAMPLES * 2; // 1458 bytes (1500 is max)
 
-// Create audio double buffer using 16-bit signed integers
-int16_t audioBufferA[BUFFER_SAMPLES];
-int16_t audioBufferB[BUFFER_SAMPLES];
+// Create audio double buffer 
+int16_t audioBufferA[TOTAL_BUFFER_SAMPLES];
+int16_t audioBufferB[TOTAL_BUFFER_SAMPLES];
 int16_t* activeBuffer = audioBufferA;
 int16_t* pendingBuffer = audioBufferB;
+
 int bufferIndex = 0; 
 
 // WiFi setup
 int status = WL_IDLE_STATUS;
-WiFiUDP Udp; 
+
+WiFiUDP Udp; // Use UDP for speed, may lose data
+
 unsigned long lastSampleTime = 0; 
 
-void setup() {
-  // Read at 10-bit resolution (0-1023)
-  analogReadResolution(10);
 
+void setup() {
+  // Read 10-bit audio 
+  analogReadResolution(10);
   while (status != WL_CONNECTED) {
     status = WiFi.begin(ssid, pass);
     delay(1000);
   }
-  Udp.begin(2390);
-}
+  Udp.begin(8080); // Same as python
+  }
 
 void loop() {
   if (micros() - lastSampleTime >= MIC_INTERVAL) {
     lastSampleTime = micros(); 
 
-    // Read 10-bit sample (0-1023)
-    uint16_t sample_10bit = analogRead(MIC_PIN);
+    // Read mic inputs
+    uint16_t sample_10bit_1 = analogRead(MIC_PIN_1);
+    uint16_t sample_10bit_2 = analogRead(MIC_PIN_2);
+    uint16_t sample_10bit_3 = analogRead(MIC_PIN_3);
     
-    // Convert to 16-bit signed audio
-    // 1. Subtract 512 to center the wave at 0 (range -512 to +511)
-    // 2. Shift left by 6 to scale it to 16-bit range
-    //    (Resulting range: -32768 to +32704)
-    activeBuffer[bufferIndex] = (int16_t)(sample_10bit - 512) << 6;
+    // Place each sample in the buffer in order
+    activeBuffer[bufferIndex + 0] = (int16_t)(sample_10bit_1 - 512) << 6; // Channel 1
+    activeBuffer[bufferIndex + 1] = (int16_t)(sample_10bit_2 - 512) << 6; // Channel 2
+    activeBuffer[bufferIndex + 2] = (int16_t)(sample_10bit_3 - 512) << 6; // Channel 3
     
-    bufferIndex++;
+    bufferIndex += 3;
 
-    if (bufferIndex >= BUFFER_SAMPLES) { 
-        // Swap active and pending buffers
+    // Check if the buffer is full (729 samples)
+    if (bufferIndex >= TOTAL_BUFFER_SAMPLES) { 
+        // Exchange active/pending buffers 
         int16_t* temp = activeBuffer;
         activeBuffer = pendingBuffer;
         pendingBuffer = temp;
 
-        // Reset index for the new active buffer
         bufferIndex = 0; 
 
-        // Send the (now) pending buffer
+        // Send the pending buffer (already filled)
         Udp.beginPacket(serverAddress, serverPort);
-        // Cast our int16_t buffer to a raw byte pointer (uint8_t*)
-        // and send the total number of *bytes*.
-        Udp.write((uint8_t*)pendingBuffer, BUFFER_SIZE_BYTES);
+        Udp.write((uint8_t*)pendingBuffer, BUFFER_SIZE_BYTES); // Sends 1458 bytes
         Udp.endPacket();
     }
   }
 }
+
