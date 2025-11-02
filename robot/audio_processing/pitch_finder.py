@@ -65,12 +65,21 @@ def pitch_to_note(f0, min_instances=5):
 
     return np.array(cleaned_notes)    
 
+def check_melody(notes, melody):
+    for i in range(len(notes) - len(melody) + 1):
+        if np.array_equal(notes[i:i+len(melody)], melody):
+            return True
+    return False
+
 if __name__ == "__main__":
     y, sr = load_audio("media/beastling_sing.wav")
     f0 = estimate_pitch(y, sr)
     notes = pitch_to_note(f0, 8)
+    melody = np.array(['A3', 'A#3', 'G3', 'A3', 'D3', 'A3', 'F3', 'C4'])
+    check_melody(notes, melody)
     # print(f0)
     print(notes)
+
 
 # fig, ax = plt.subplots()  # Create a figure containing a single Axes.
 # ax.plot(f0)  # Plot some data on the Axes.
