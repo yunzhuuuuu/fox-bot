@@ -25,8 +25,8 @@ def load_audio(filename: str):
     path = os.path.dirname(os.path.abspath(__file__))
     audio_path = os.path.join(path, filename)
     y, sr = librosa.load(audio_path)
-    print(sr)
-    print("loading audio and yin-ing")
+    # print(sr)
+    print("loading and analyzing audio")
     return y, sr
 
 
@@ -72,15 +72,24 @@ def check_melody(notes, melody):
     return False
 
 
-if __name__ == "__main__":
-    y, sr = load_audio("media/output_audio.wav")
-    f0 = estimate_pitch(y, sr)
-    notes = pitch_to_note(f0, 8)
+def run_pitch_finder(audio_path, min_instances=5):
+    """
+    High-level wrapper that loads audio, detects pitch, and checks melody.
+    Returns True if certain melody is found, otherwise false
+    """
     melody = np.array(["A3", "A♯3", "G3", "A3", "D3", "A3", "F3", "C4"])
+    y, sr = load_audio(audio_path)
+    f0 = estimate_pitch(y, sr)
+    # print(f0)
+    notes = pitch_to_note(f0, min_instances)
+    print(notes)
     is_melody = check_melody(notes, melody)
     print(is_melody)
-    # print(f0)
-    print(notes)
+    return is_melody
+
+
+if __name__ == "__main__":
+    run_pitch_finder("media/output_audio.wav", 8)
 
 
 # fig, ax = plt.subplots()  # Create a figure containing a single Axes.
