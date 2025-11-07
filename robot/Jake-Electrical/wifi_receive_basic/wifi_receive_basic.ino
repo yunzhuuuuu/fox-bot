@@ -6,7 +6,6 @@
 char ssid[] = "jakewifi"; // WiFi name 
 char pass[] = "12345678"; // WiFi password
 IPAddress serverAddress(192, 168, 137, 1); // IP of the Python server
-int serverPort = 8081; // Port of Python server
 char packetBuffer[255]; //buffer to hold incoming packet
 
 // WiFi Setup
@@ -27,7 +26,7 @@ Adafruit_DCMotor *m22 = ms2.getMotor(2); // Rear motor 2
 Adafruit_DCMotor *m23 = ms2.getMotor(3); // Ear motor 1
 
 void setup() {
-  Serial.begin(9600); // Start Serial first for debugging
+  Serial.begin(9600);
 
   if (!ms1.begin()) { // Check if MS1 is found
     Serial.println("Failed to find MS1");
@@ -38,7 +37,6 @@ void setup() {
     while (1);
   }
 
-  // --- All motor run() and setSpeed() commands are REMOVED from setup() ---
   Serial.println("Motor Shields OK");
 
   // Connect to WiFi
@@ -48,7 +46,7 @@ void setup() {
     status = WiFi.begin(ssid, pass);
     delay(1000);
   }
-  Serial.println("Connected to WiFi");
+  Serial.println("Connected to WiFi!!");
   
   Udp.begin(8081); // Start UDP listener
 }
@@ -57,28 +55,24 @@ void loop() {
   // If there's a packet available read it
   int packetSize = Udp.parsePacket();
   if (packetSize) {
-    // --- Motors only run WHEN a packet is received ---
+    // 
     
-    // Read the packet (though we aren't using the data yet)
     IPAddress remoteIp = Udp.remoteIP();
     int len = Udp.read(packetBuffer, 255);
     if (len > 0) {
-      packetBuffer[len] = 0; // Make sure it's a null-terminated string
+      packetBuffer[len] = 0; 
     }
     Serial.print("Received packet: ");
     Serial.println(packetBuffer);
 
-    // Run motors as a test
     m11->run(BACKWARD);
     m11->setSpeed(150);
     m12->run(FORWARD);
     m12->setSpeed(150);
     
-    delay(1000); // Run them for 1 second
+    delay(1000); 
 
-    // STOP the motors
     m11->run(RELEASE);
     m12->run(RELEASE);
   }
-  // If no packet is received, the loop repeats and motors remain off.
 }

@@ -1,8 +1,8 @@
 import socket
 import time
 
-# Setup[]
-ARDUINO_IP = '192.168.137.112' # Arduino IP address
+# Setup
+ARDUINO_IP = '192.168.137.67' # Arduino IP address
 ARDUINO_PORT = 8081 # Must match 'serverPort' of arduino
 
 
@@ -19,7 +19,5 @@ def send_data(command):
             print(f"Error sending data: {e}")
 
 if __name__ == "__main__":
-    # start_server()
-    time.sleep(1)
     send_data("L")
 
