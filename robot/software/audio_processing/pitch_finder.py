@@ -22,8 +22,8 @@ import matplotlib.pyplot as plt
 
 def load_audio(filename: str):
     """Return waveform (y) and sampling rate (sr) from a file in the current directory."""
-    path = os.path.dirname(os.path.abspath(__file__))
-    audio_path = os.path.join(path, filename)
+    MEDIA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "media")
+    audio_path = os.path.join(MEDIA_DIR, filename)
     y, sr = librosa.load(audio_path)
     # print(sr)
     print("loading and analyzing audio")
@@ -89,7 +89,7 @@ def run_pitch_finder(audio_path, min_instances=5):
 
 
 if __name__ == "__main__":
-    run_pitch_finder("media/output_audio.wav", 8)
+    run_pitch_finder("output_audio.wav", 8)
 
 
 # fig, ax = plt.subplots()  # Create a figure containing a single Axes.

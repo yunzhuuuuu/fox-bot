@@ -1,36 +1,43 @@
 import serial
 import wave
 import numpy as np
+import os
 
 # Audio Format Settings
-SERIAL_PORT = 'COM10' # UPDATE THIS to match actual Arduino's port
-BAUD_RATE = 1000000 # Must match SERIAL_BAUD_RATE in Arduino
-SERIAL_TIMEOUT = 1 # Seconds
+SERIAL_PORT = "COM10"  # UPDATE THIS to match actual Arduino's port
+BAUD_RATE = 1000000  # Must match SERIAL_BAUD_RATE in Arduino
+SERIAL_TIMEOUT = 1  # Seconds
 
 HEADER_BYTE_1 = 0xFF
 HEADER_BYTE_2 = 0xFE
 # 729 samples * 2 bytes/sample = 1458 bytes
-PAYLOAD_SIZE_BYTES = 1458 
+PAYLOAD_SIZE_BYTES = 1458
 
-CHANNELS = 3 # Must match NUM_CHANNELS in Arduino
-SAMPLE_RATE = 7500 # Must match SAMPLE_RATE in Arduino
-SAMPLE_WIDTH_BYTES = 2 # 16-bit audio (int16_t)
+CHANNELS = 3  # Must match NUM_CHANNELS in Arduino
+SAMPLE_RATE = 7500  # Must match SAMPLE_RATE in Arduino
+SAMPLE_WIDTH_BYTES = 2  # 16-bit audio (int16_t)
 
-OUTPUT_FILENAME = "output_audio.raw"
-OUTPUT_WAV_FILENAME = "output_audio.wav" # Make sure 'media' folder exists
-
+# Path to media folder
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, "..", ".."))
+MEDIA_DIR = os.path.join(PROJECT_ROOT, "media")
+# OUTPUT_FILENAME = os.path.join(MEDIA_DIR, "output_audio.raw")
+# OUTPUT_WAV_FILENAME = os.path.join(MEDIA_DIR, "output_audio.wav")
 
 all_audio_data = []
+
 
 def save_audio_wav():
     """
     Saves all collected audio data (payloads only) to a .wav file.
     """
     print(f"\nSaving audio chunks directly to {OUTPUT_WAV_FILENAME}...")
- 
+
     # Combine all binary chunks into one big bytes object
-    full_data = b''.join(all_audio_data)
-    samples = np.frombuffer(full_data, dtype='<i2')  # little-endian('<') 16-bit('i2') signed int
+    full_data = b"".join(all_audio_data)
+    samples = np.frombuffer(
+        full_data, dtype="<i2"
+    )  # little-endian('<') 16-bit('i2') signed int
 
     # Reshape into 3-column array (3 mics)
     if len(samples) % 3 != 0:
@@ -49,27 +56,28 @@ def save_audio_wav():
             f_out.writeframes(data.tobytes())
 
     # Save each mic
-    save_single_channel("mic1_output.wav", mic1)
-    save_single_channel("mic2_output.wav", mic2)
-    save_single_channel("mic3_output.wav", mic3)
+    save_single_channel(os.path.join(MEDIA_DIR, "mic1_output.wav"), mic1)
+    save_single_channel(os.path.join(MEDIA_DIR, "mic2_output.wav"), mic2)
+    save_single_channel(os.path.join(MEDIA_DIR, "mic3_output.wav"), mic3)
 
     print("Successfully saved as WAV.")
+
 
 def start_serial_listener():
     """Starts listening on the serial port for audio packets."""
     try:
         with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=SERIAL_TIMEOUT) as ser:
             print("Waiting for audio stream... (Press Ctrl+C to stop)")
-            
+
             # Flush any old data in the serial buffer
-            ser.flushInput() 
+            ser.flushInput()
             while True:
                 # --- Synchronization Step ---
                 # 1. Read 1 byte, check if it's HEADER_BYTE_1
                 byte1_raw = ser.read(1)
                 if not byte1_raw:
                     # This happens on timeout
-                    print("T", end="", flush=True) # Indicate a timeout
+                    print("T", end="", flush=True)  # Indicate a timeout
                     continue
                 if byte1_raw[0] != HEADER_BYTE_1:
                     # Not the start of a packet, keep searching
@@ -77,7 +85,7 @@ def start_serial_listener():
                 # 2. Read 1 more byte, check if it's HEADER_BYTE_2
                 byte2_raw = ser.read(1)
                 if not byte2_raw:
-                    continue # Timeout
+                    continue  # Timeout
 
                 if byte2_raw[0] != HEADER_BYTE_2:
                     # Got 0xFF but not 0xFE, false positive
@@ -86,7 +94,7 @@ def start_serial_listener():
                 # If we're here, we found the 0xFFFE header.
                 # 3. Read the exact payload size
                 data = ser.read(PAYLOAD_SIZE_BYTES)
-                
+
                 if len(data) == PAYLOAD_SIZE_BYTES:
                     # We got the full packet!
                     all_audio_data.append(data)
@@ -101,6 +109,7 @@ def start_serial_listener():
         print("\nShutting down listener...")
         # [FIX] Call save_audio_data() HERE, before the function returns.
         save_audio_wav()
+
 
 if __name__ == "__main__":
     start_serial_listener()
