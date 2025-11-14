@@ -2,15 +2,9 @@ import socket
 import time
 import robot.audio_processing.pitch_finder as pf
 
-<<<<<<< HEAD
-# Setup
-ARDUINO_IP = '192.168.137.67' # Arduino IP address
-ARDUINO_PORT = 8081 # Must match 'serverPort' of arduino
-=======
 # Setup[]
 ARDUINO_IP = "192.168.137.112"  # Arduino IP address
 ARDUINO_PORT = 8081  # Must match 'serverPort' of arduino
->>>>>>> 27b70cf2ec2f3ef1139ef6a0abd742d54e18434a
 
 
 def send_data(command):
@@ -27,13 +21,8 @@ def send_data(command):
 
 
 if __name__ == "__main__":
-<<<<<<< HEAD
-    send_data("L")
-
-=======
     # start_server()
     time.sleep(1)
     is_melody = pf.run_pitch_finder("media/output_audio.wav", 8)
     if is_melody:
         send_data("Active")
->>>>>>> 27b70cf2ec2f3ef1139ef6a0abd742d54e18434a
