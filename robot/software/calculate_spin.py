@@ -1,4 +1,4 @@
-# Bytes 1&2 = Angle delta for robot to move -180-180(2 bytes)
+# Bytes 1&2 = Angle delta for robot to move 0-360(2 bytes)
 
 import math
 
@@ -35,9 +35,6 @@ def calculate_spin(d1, d2, d3):
     else:  # d3 == d_max
         inscribed_a = law_of_cos(d1, spacing, d3)
         angle = math.degrees(2 * inscribed_a) + 240
-
-    if angle > 180:
-        angle -= 360
 
     return angle
 
