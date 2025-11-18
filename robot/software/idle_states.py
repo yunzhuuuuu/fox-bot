@@ -23,11 +23,30 @@ class RobotIdleState:
         self.ear = 90  # 0–180
         self.tail = 120  # 0–180
         self.eye_brightness = 1  # for formatting
-        self.eye = [0] * 32  # eye array (8 bytes?)
+        self.eye = [0] * 64  # eye array (8 bytes)
+
+        self.last_behavior_end = time.time()
+        self.in_idle_behavior = False
+        self.behavior = None
+
+    def default(self):
+        self.speed = max(0, self.speed - 2)
+        self.ear = 90
+        self.tail = 120
+        self.eye = [
+            0b00000000,
+            0b00000000,
+            0b00111100,
+            0b01111110,
+            0b00111100,
+            0b00000000,
+            0b00000000,
+            0b00000000,
+        ]
 
     def build_packet(self):
         """
-        Returns EXACT format Arduino expects:
+        Returns 14-byte format Arduino expects:
         <B h B B B 8s>   (14 bytes)
         """
         # pack:
@@ -57,6 +76,10 @@ class RobotIdleState:
         """
         docstring
         """
+        # record the time it starts
+        if not hasattr(self, "_behavior_start"):
+            self._behavior_start = time.time()
+
         self.speed = 0
         self.spin = 0
         self.ear = max(0, self.ear - 2)
@@ -64,34 +87,64 @@ class RobotIdleState:
         self.eye = [
             0b00000000,
             0b00000000,
-            0b00011000,
+            0b00000000,
+            0b01100110,
             0b00111100,
-            0b00111100,
-            0b00011000,
+            0b00000000,
             0b00000000,
             0b00000000,
         ]  # hardcoding it for now
+
+        # when finish
+        if time.time() - self._behavior_start >= 5.0:  # slept for 5 seconds
+            self.in_idle_behavior = False
+            self.last_behavior_end = time.time()
+            del self._behavior_start
 
     def chase_tail(self):
         """
         docstring
         """
+
         return None
 
     # more states
 
-    def run_idle(self):
-        # randomly call one of the above states
-        behaviors = [self.sleep]  # add self.chase_tail and others when ready
-        behavior = random.choice(behaviors)
-        return behavior()
+    # def run_idle(self):
+    #     # randomly call one of the above states
+    #     behaviors = [self.sleep]  # add self.chase_tail and others when ready
+    #     behavior = random.choice(behaviors)
+    #     return behavior()
+
+    def update(self):
+        """
+        Called every time frame. Handles:
+        - Starting idle behavior every 10 sec
+        - Running idle behavior for 5 sec
+        - Returning to default() after that
+        """
+
+        now = time.time()
+
+        if self.in_idle_behavior:
+            self.behavior()
+
+        else:
+            # Default state until it's time to start a behavior
+            if now - self.last_behavior_end >= 10.0:
+                self.in_idle_behavior = True
+                behaviors = [self.sleep]  # add self.chase_tail and others when ready
+                self.behavior = random.choice(behaviors)
+            else:
+                # Normal default state
+                self.default()
 
 
 if __name__ == "__main__":
     fox = RobotIdleState()
     while True:
-        fox.run_idle()
-        print(fox.ear)
+        fox.update()
+        # print(fox.tail)
         array = fox.build_packet()  # array to arduino
-        # print(array)
-        time.sleep(0.02)  # 50Hz
+        print(array)
+        time.sleep(0.5)  # 50Hz
