@@ -1,6 +1,6 @@
 class EyeDisplay:
 
-    def eye_to_bytes(self, eye_strings):
+    def eye_to_bytes(self, eye_lists):
         """_summary_
 
         Args:
@@ -9,9 +9,11 @@ class EyeDisplay:
         Returns:
             _type_: _description_
         """
-        flattened_string = "".join([str(bit) for line in eye_strings for bit in line])
-        print(flattened_string)
-        eye_bytes = int(flattened_string, 2).to_bytes(8, byteorder="big")
+        eye_bytes = []
+        for line in eye_lists:
+            flattened_string = "".join([str(bit) for bit in line])
+            print(flattened_string)
+            eye_bytes.append(int(flattened_string, 2).to_bytes(1, byteorder="big"))
         return eye_bytes
 
     def eye_with_position(self, position):
@@ -87,16 +89,18 @@ class EyeDisplay:
         [0, 0, 0, 0, 0, 0, 0, 0],
     ]
 
-    blink = [
+    sleeping = [
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 1, 0, 0, 0, 0, 1, 0],
+        [1, 1, 0, 0, 0, 0, 1, 1],
+        [0, 1, 1, 1, 1, 1, 1, 0],
         [0, 0, 1, 1, 1, 1, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
     ]
+
+    happy = reversed(sleeping)
 
     heart_left = [
         [0, 0, 0, 0, 0, 0, 0, 0],
@@ -119,9 +123,3 @@ class EyeDisplay:
         [0, 0, 0, 1, 1, 1, 0, 0],
         [0, 0, 0, 0, 1, 0, 0, 0],
     ]
-
-
-myEye = EyeDisplay()
-
-
-print(myEye.eye_to_bytes(myEye.eye_with_position((2, 2))))
