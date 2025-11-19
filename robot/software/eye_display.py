@@ -51,7 +51,16 @@ class EyeDisplay:
 
         return eye
 
-    def eye_rotate_clockwise(self):  # true for clockwise, false for counterclockwise
+    def eye_rotate(self, clockwise):  # true for clockwise, false for counterclockwise
+        """
+        Generates a series of eye arrays with pupil positions in a circle.
+
+        Args:
+            clockwise (boolean): Boolean representing whether it should go clockwise or counterclockwise.
+
+        Returns:
+            list<list<list<boolean>>>: List of 2d lists of booleans representing eyes.
+        """
         positions = [
             (0, 1),
             (1, 0),
@@ -63,7 +72,9 @@ class EyeDisplay:
             (0, 2),
         ]
 
-        return (self.eye_with_position(position) for position in positions)
+        if clockwise:
+            return (self.eye_with_position(position) for position in positions)
+        return (self.eye_with_position(position) for position in reversed(positions))
 
     blink = [
         [0, 0, 0, 0, 0, 0, 0, 0],
@@ -74,6 +85,39 @@ class EyeDisplay:
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0],
+    ]
+
+    blink = [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 0, 0, 0, 0, 1, 0],
+        [0, 0, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+    ]
+
+    heart_left = [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 1, 1, 0, 1, 1, 0, 0],
+        [1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 0],
+        [1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 1, 1, 1, 0, 0, 0],
+        [0, 0, 0, 1, 0, 0, 0, 0],
+    ]
+
+    heart_right = [
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 1, 1, 0, 1, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 1, 1, 1, 1],
+        [0, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 1, 1, 1, 1, 1, 0],
+        [0, 0, 0, 1, 1, 1, 0, 0],
+        [0, 0, 0, 0, 1, 0, 0, 0],
     ]
 
 
