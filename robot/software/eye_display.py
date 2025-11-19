@@ -75,8 +75,8 @@ class EyeDisplay:
         ]
 
         if clockwise:
-            return (self.eye_with_position(position) for position in positions)
-        return (self.eye_with_position(position) for position in reversed(positions))
+            return [self.eye_with_position(position) for position in positions]
+        return [self.eye_with_position(position) for position in reversed(positions)]
 
     blink = [
         [0, 0, 0, 0, 0, 0, 0, 0],

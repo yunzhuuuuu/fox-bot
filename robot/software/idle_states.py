@@ -12,6 +12,7 @@
 import time
 import random
 import struct
+import robot.software.eye_display as eye_display
 
 
 class RobotIdleState:
@@ -23,26 +24,37 @@ class RobotIdleState:
         self.ear = 90  # 0–180
         self.tail = 120  # 0–180
         self.eye_brightness = 1  # for formatting
-        self.eye = [0] * 64  # eye array (8 bytes)
+        self.eye = eye_display.EyeDisplay()
+        # self.eye = [0] * 64  # eye array (8 bytes)
 
         self.last_behavior_end = time.time()
         self.in_idle_behavior = False
         self.behavior = None
 
+        self.chase_tail_phase = 0
+        # self.direction = None
+
     def default(self):
+        """
+        Passive idle, called when not running a special behavior.
+
+        Slowly reduces movement until static, ears face forward, neutral tail,
+        and sets eyes to a centered gaze.
+        """
         self.speed = max(0, self.speed - 2)
         self.ear = 90
         self.tail = 120
-        self.eye = [
-            0b00000000,
-            0b00000000,
-            0b00111100,
-            0b01111110,
-            0b00111100,
-            0b00000000,
-            0b00000000,
-            0b00000000,
-        ]
+        # self.eye = [
+        #     0b00000000,
+        #     0b00000000,
+        #     0b00111100,
+        #     0b01111110,
+        #     0b00111100,
+        #     0b00000000,
+        #     0b00000000,
+        #     0b00000000,
+        # ]
+        self.eye = self.eye.eye_with_position((1, 1))
 
     def build_packet(self):
         """
@@ -74,7 +86,11 @@ class RobotIdleState:
 
     def sleep(self):
         """
-        docstring
+        Sleep behavior:
+        - Ears fold inside
+        - Tail curl to the right
+        - Eyes show the "sleeping" pattern
+        - Runs for 5 seconds before returning to default
         """
         # record the time it starts
         if not hasattr(self, "_behavior_start"):
@@ -84,16 +100,17 @@ class RobotIdleState:
         self.spin = 0
         self.ear = max(0, self.ear - 2)
         self.tail = min(180, self.tail + 3)
-        self.eye = [
-            0b00000000,
-            0b00000000,
-            0b00000000,
-            0b01100110,
-            0b00111100,
-            0b00000000,
-            0b00000000,
-            0b00000000,
-        ]  # hardcoding it for now
+        # self.eye = [
+        #     0b00000000,
+        #     0b00000000,
+        #     0b00000000,
+        #     0b01100110,
+        #     0b00111100,
+        #     0b00000000,
+        #     0b00000000,
+        #     0b00000000,
+        # ]  # hardcoding it for now
+        self.eye = self.eye.sleeping
 
         # when finish
         if time.time() - self._behavior_start >= 5.0:  # slept for 5 seconds
@@ -103,18 +120,80 @@ class RobotIdleState:
 
     def chase_tail(self):
         """
-        docstring
+        phases:
+        - 0. swings the tail to the left, then swings back to the right
+        - 1. look at its tail
+        - 2. spin to the right, tail moves to the left
+        - 3. tail out of sight, gets dizzy
+        - 4. cleanup and return to idle
+
+        need to test on robot and adjust all angles and time
         """
+        # record the time it starts
+        if not hasattr(self, "_behavior_start"):
+            self._behavior_start = time.time()
+            self.chase_tail_phase = 0
+            self.tail = 45
+            self._rotate_frames = self.eye.eye_rotate_clockwise()
+            self._frame_index = 0
+            self._last_frame_time = None
+
+        now = time.time()
+        elapsed = now - self._behavior_start
+
+        # Phase 0: Tail swing
+        if self.chase_tail_phase == 0:
+            # this should take 0.5 second
+            if self.tail <= 120:
+                self.tail += (
+                    120 - 45
+                ) / 50  # 50 time frames in 0.5 seconds under 100Hz
+            else:
+                self.chase_tail_phase = 1
+
+        # Phase 1: Look at tail
+        elif self.chase_tail_phase == 1:
+            self.eye = self.eye.eye_with_position((3, 2))
+            if elapsed > 0.8:  # look for 0.8 - 0.5 = 0.3 seconds
+                self.chase_tail_phase = 2
+
+        # Phase 2: Spin and counter-tail movement
+        elif self.chase_tail_phase == 2:
+            if elapsed < 2:  # chases its tail for about 2 - 0.5 - 0.3 = 1.2 seconds
+                self.spin = min(360, self.spin + 2)
+            if elapsed > 1:
+                # tail starts to move in opposite direction after 1 second, stops when angle=75
+                self.tail = max(75, self.tail - 2)
+
+            if elapsed > 2:
+                self.chase_tail_phase = 3
+                self._frame_index = 0
+                self._last_frame_time = now
+
+        # Phase 3: Dizzy animation
+        elif self.chase_tail_phase == 3:
+            # Change frames every 0.1s
+            if now - self._last_frame_time > 0.1:
+                self._last_frame_time = now
+                self._frame_index += 1
+
+                if self._frame_index >= len(self._rotate_frames):
+                    self.chase_tail_phase = 4
+                else:
+                    self.eye = self._rotate_frames[self._frame_index]
+
+        # Phase 4: End behavior
+        if self.chase_tail_phase == 4:
+            self.in_idle_behavior = False
+            self.last_behavior_end = time.time()
+            del self._behavior_start
+            del self._rotate_frames
+            del self._frame_index
+            del self._last_frame_time
 
         return None
 
     # more states
-
-    # def run_idle(self):
-    #     # randomly call one of the above states
-    #     behaviors = [self.sleep]  # add self.chase_tail and others when ready
-    #     behavior = random.choice(behaviors)
-    #     return behavior()
 
     def update(self):
         """
@@ -147,4 +226,4 @@ if __name__ == "__main__":
         # print(fox.tail)
         array = fox.build_packet()  # array to arduino
         print(array)
-        time.sleep(0.5)  # 50Hz
+        time.sleep(0.01)  # 100Hz
