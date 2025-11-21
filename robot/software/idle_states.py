@@ -73,13 +73,12 @@ class RobotIdleState:
         # array[0:3] = bin(fox.speed)[2:]
         # array[4:11] = bin(fox.spin)[2:]
         # array[] ...
-
         return struct.pack(
             "<BhBBB8B",
-            self.speed,
+            int(self.speed),
             int(self.spin),
-            self.ear,
-            self.tail,
+            int(self.ear),
+            int(self.tail),
             self.eye_brightness,
             *self.eye_object.current_state
         )
@@ -134,7 +133,8 @@ class RobotIdleState:
             self._behavior_start = time.time()
             self.chase_tail_phase = 0
             self.tail = 45
-            self._rotate_frames = self.eye_object.eye_rotate_clockwise()
+            self._rotate_frames = self.eye_object.eye_rotate(1)  # clockwise
+            # print(self._rotate_frames)
             self._frame_index = 0
             self._last_frame_time = None
 
@@ -180,7 +180,10 @@ class RobotIdleState:
                 if self._frame_index >= len(self._rotate_frames):
                     self.chase_tail_phase = 4
                 else:
-                    self.eye_object.current_state = self._rotate_frames[self._frame_index]
+                    self.eye_object.current_state = self._rotate_frames[
+                        self._frame_index
+                    ]
+                    print(self.eye_object.current_state)
 
         # Phase 4: End behavior
         if self.chase_tail_phase == 4:
@@ -212,7 +215,10 @@ class RobotIdleState:
             # Default state until it's time to start a behavior
             if now - self.last_behavior_end >= 10.0:
                 self.in_idle_behavior = True
-                behaviors = [self.sleep]  # add self.chase_tail and others when ready
+                behaviors = [
+                    self.sleep,
+                    self.chase_tail,
+                ]  # add self.chase_tail and others when ready
                 self.behavior = random.choice(behaviors)
             else:
                 # Normal default state
@@ -221,12 +227,17 @@ class RobotIdleState:
 
 if __name__ == "__main__":
     fox = RobotIdleState()
-    while True:
-        fox.update()
-        # print(fox.tail)
-        array = fox.build_packet()  # array to arduino
-        print(array)
-        time.sleep(0.01)  # 100Hz
+    # while True:
+    #     fox.update()
+    #     # print(fox.tail)
+    #     array = fox.build_packet()  # array to arduino
+    #     print(array)
+    #     time.sleep(0.01)  # 100Hz
 
     # # test
-    # fox.default()
+    while True:
+        # fox.update()
+        fox.chase_tail()
+        array = fox.build_packet()
+        print(fox.chase_tail_phase)
+        print(fox.eye_object.current_state)

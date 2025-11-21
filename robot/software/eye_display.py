@@ -1,7 +1,7 @@
 class EyeDisplay:
 
     def __init__(self):
-        self.current_state = 0  # current state is a list of binary integers
+        self.current_state = [0] * 8  # current state is a list of binary integers
 
     def set_state(self, eye):
         """
@@ -27,7 +27,7 @@ class EyeDisplay:
         eye_bytes = []
         for line in eye_list:
             flattened_string = "".join([str(bit) for bit in line])
-            print(flattened_string)
+            # print(flattened_string)
             eye_bytes.append(int(flattened_string, 2))
         return eye_bytes
 
