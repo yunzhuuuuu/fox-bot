@@ -24,7 +24,7 @@ class RobotIdleState:
         self.ear = 90  # 0–180
         self.tail = 120  # 0–180
         self.eye_brightness = 1  # for formatting
-        self.eye = eye_display.EyeDisplay()
+        self.eye_object = eye_display.EyeDisplay()
         # self.eye = [0] * 64  # eye array (8 bytes)
 
         self.last_behavior_end = time.time()
@@ -54,7 +54,7 @@ class RobotIdleState:
         #     0b00000000,
         #     0b00000000,
         # ]
-        self.eye = self.eye.eye_with_position((1, 1))
+        self.eye_object.set_state(self.eye_object.eye_with_position((1, 1)))
 
     def build_packet(self):
         """
@@ -81,7 +81,7 @@ class RobotIdleState:
             self.ear,
             self.tail,
             self.eye_brightness,
-            *self.eye
+            *self.eye_object.current_state
         )
 
     def sleep(self):
@@ -110,7 +110,7 @@ class RobotIdleState:
         #     0b00000000,
         #     0b00000000,
         # ]  # hardcoding it for now
-        self.eye = self.eye.sleeping
+        self.eye_object.set_state(self.eye_object.sleeping)
 
         # when finish
         if time.time() - self._behavior_start >= 5.0:  # slept for 5 seconds
@@ -134,7 +134,7 @@ class RobotIdleState:
             self._behavior_start = time.time()
             self.chase_tail_phase = 0
             self.tail = 45
-            self._rotate_frames = self.eye.eye_rotate_clockwise()
+            self._rotate_frames = self.eye_object.eye_rotate_clockwise()
             self._frame_index = 0
             self._last_frame_time = None
 
@@ -153,7 +153,7 @@ class RobotIdleState:
 
         # Phase 1: Look at tail
         elif self.chase_tail_phase == 1:
-            self.eye = self.eye.eye_with_position((3, 2))
+            self.eye_object.set_state(self.eye_object.eye_with_position((3, 2)))
             if elapsed > 0.8:  # look for 0.8 - 0.5 = 0.3 seconds
                 self.chase_tail_phase = 2
 
@@ -180,7 +180,7 @@ class RobotIdleState:
                 if self._frame_index >= len(self._rotate_frames):
                     self.chase_tail_phase = 4
                 else:
-                    self.eye = self._rotate_frames[self._frame_index]
+                    self.eye_object.current_state = self._rotate_frames[self._frame_index]
 
         # Phase 4: End behavior
         if self.chase_tail_phase == 4:
@@ -227,3 +227,6 @@ if __name__ == "__main__":
         array = fox.build_packet()  # array to arduino
         print(array)
         time.sleep(0.01)  # 100Hz
+
+    # # test
+    # fox.default()

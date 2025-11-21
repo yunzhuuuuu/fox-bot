@@ -17,7 +17,7 @@ def print_robot_state(fox):
     print(f"Ear angle:      {fox.ear}")
     print(f"Tail angle:     {fox.tail}")
     print(f"Eye brightness: {fox.eye_brightness}")
-    print(f"Eye array:      {fox.eye}")
+    print(f"Eye array:      {fox.eye_object.current_state}")
     print("=============================================")
 
 
