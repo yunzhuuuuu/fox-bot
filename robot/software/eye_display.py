@@ -1,19 +1,34 @@
 class EyeDisplay:
 
-    def eye_to_bytes(self, eye_lists):
-        """_summary_
+    def __init__(self):
+        self.current_state = 0  # current state is a list of binary integers
+
+    def set_state(self, eye):
+        """
+        Set current_state to bytes that represent the eye
 
         Args:
-            eye_strings (_type_): _description_
+            eye (list<list<boolean>>): 2d list of booleans representing which LEDs should be on or
+                off
+        """
+        self.current_state = self.eye_to_bytes(eye)
+
+    def eye_to_bytes(self, eye_list):
+        """
+        Convert list of booleans to binary integers
+
+        Args:
+            eye_list (list<list<boolean>>): 2d list of booleans representing which LEDs should
+                be on or off
 
         Returns:
-            _type_: _description_
+            list<int>: Bytes as binary ints
         """
         eye_bytes = []
-        for line in eye_lists:
+        for line in eye_list:
             flattened_string = "".join([str(bit) for bit in line])
             print(flattened_string)
-            eye_bytes.append(int(flattened_string, 2).to_bytes(1, byteorder="big"))
+            eye_bytes.append(int(flattened_string, 2))
         return eye_bytes
 
     def eye_with_position(self, position):
@@ -58,7 +73,8 @@ class EyeDisplay:
         Generates a series of eye arrays with pupil positions in a circle.
 
         Args:
-            clockwise (boolean): Boolean representing whether it should go clockwise or counterclockwise.
+            clockwise (boolean): Boolean representing whether it should go clockwise or
+                counterclockwise.
 
         Returns:
             list<list<list<boolean>>>: List of 2d lists of booleans representing eyes.
