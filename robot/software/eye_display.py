@@ -77,7 +77,7 @@ class EyeDisplay:
                 counterclockwise.
 
         Returns:
-            list<list<list<boolean>>>: List of 2d lists of booleans representing eyes.
+            list<list<int>>: List of lists of binary integers representing eye rows.
         """
         positions = [
             (0, 1),
@@ -91,8 +91,14 @@ class EyeDisplay:
         ]
 
         if clockwise:
-            return [self.eye_with_position(position) for position in positions]
-        return [self.eye_with_position(position) for position in reversed(positions)]
+            return [
+                self.eye_to_bytes(self.eye_with_position(position))
+                for position in positions
+            ]
+        return [
+            self.eye_to_bytes(self.eye_with_position(position))
+            for position in reversed(positions)
+        ]
 
     blink = [
         [0, 0, 0, 0, 0, 0, 0, 0],
