@@ -229,7 +229,7 @@ class RobotBehaviors:
 
 
 if __name__ == "__main__":
-    fox = RobotIdleState()
+    fox = RobotBehaviors()
     # while True:
     #     fox.update()
     #     # print(fox.tail)
