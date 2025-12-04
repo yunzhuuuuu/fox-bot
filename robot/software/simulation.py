@@ -1,5 +1,5 @@
 import time
-from robot.software.idle_states import RobotIdleState
+from robot.software.behaviors import RobotBehaviors
 
 
 def packet_to_hex(packet):
@@ -29,7 +29,7 @@ def print_packet(packet):
 
 
 if __name__ == "__main__":
-    fox = RobotIdleState()
+    fox = RobotBehaviors()
 
     # Run simulation
     while True:

@@ -1,7 +1,8 @@
 import socket
 import time
 import robot.software.audio_processing.pitch_finder as pf
-import robot.software.idle_states as idle
+from robot.software.behaviors import RobotBehaviors
+
 # Setup[]
 ARDUINO_IP = "192.168.137.112"  # Arduino IP address
 ARDUINO_PORT = 8081  # Must match 'serverPort' of arduino
@@ -24,11 +25,17 @@ def send_data(command):
 if __name__ == "__main__":
     # start_server()
     time.sleep(1)
+
     # is_melody = pf.run_pitch_finder("output_audio.wav", 8)
     # if is_melody:
     #     send_data("Active")
-    fox = idle.RobotIdleState()
-    fox.update()
-    array = fox.build_packet() 
-    # b'\x00\x00\x00X{\x01\x00\x00\x18<<\x18\x00\x00'
-    send_data(array)
+
+    fox = RobotBehaviors()
+
+    while True:
+        fox.update()
+
+        packet = fox.build_packet()
+
+        send_data(packet)
+        time.sleep(0.05)  # 20 hz

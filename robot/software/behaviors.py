@@ -15,7 +15,7 @@ import struct
 import robot.software.eye_display as eye_display
 
 
-class RobotIdleState:
+class RobotBehaviors:
 
     def __init__(self):
         # initialize robot components
@@ -82,6 +82,9 @@ class RobotIdleState:
             self.eye_brightness,
             *self.eye_object.current_state
         )
+
+    def look_for_treat(self):
+        pass  # TODO
 
     def sleep(self):
         """
