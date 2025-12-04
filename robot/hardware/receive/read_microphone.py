@@ -1,7 +1,8 @@
-import serial
 import wave
-import numpy as np
+import time
 import os
+import serial
+import numpy as np
 
 # Audio Format Settings
 SERIAL_PORT = "COM10"  # UPDATE THIS to match actual Arduino's port
@@ -24,41 +25,25 @@ MEDIA_DIR = os.path.join(PROJECT_ROOT, "media")
 # OUTPUT_FILENAME = os.path.join(MEDIA_DIR, "output_audio.raw")
 # OUTPUT_WAV_FILENAME = os.path.join(MEDIA_DIR, "output_audio.wav")
 
+START_TIME = time.time()
 all_audio_data = []
 
 
-def save_audio_wav():
+def save_audio_wav(data, filename=time.time() - START_TIME):
     """
-    Saves all collected audio data (payloads only) to a .wav file.
+    Saves audio data (payloads only) to a .wav file.
     """
-    print(f"\nSaving audio chunks directly to {OUTPUT_WAV_FILENAME}...")
+    print(f"\nSaving audio chunks directly to {filename}...")
 
-    # Combine all binary chunks into one big bytes object
-    full_data = b"".join(all_audio_data)
     samples = np.frombuffer(
-        full_data, dtype="<i2"
+        data, dtype="<i2"
     )  # little-endian('<') 16-bit('i2') signed int
 
-    # Reshape into 3-column array (3 mics)
-    if len(samples) % 3 != 0:
-        samples = samples[: (len(samples) // 3) * 3]
-    samples = samples.reshape(-1, 3)
-
-    # Separate into three channels
-    mic1, mic2, mic3 = samples[:, 0], samples[:, 1], samples[:, 2]
-
-    # Internal function to save one channel to WAV
-    def save_single_channel(filename, data):
-        with wave.open(filename, "wb") as f_out:
-            f_out.setnchannels(1)
-            f_out.setframerate(SAMPLE_RATE)
-            f_out.setsampwidth(SAMPLE_WIDTH_BYTES)
-            f_out.writeframes(data.tobytes())
-
-    # Save each mic
-    save_single_channel(os.path.join(MEDIA_DIR, "mic1_output.wav"), mic1)
-    save_single_channel(os.path.join(MEDIA_DIR, "mic2_output.wav"), mic2)
-    save_single_channel(os.path.join(MEDIA_DIR, "mic3_output.wav"), mic3)
+    with wave.open(filename + ".wav", "wb") as f_out:
+        f_out.setnchannels(1)
+        f_out.setframerate(SAMPLE_RATE)
+        f_out.setsampwidth(SAMPLE_WIDTH_BYTES)
+        f_out.writeframes(samples.tobytes())
 
     print("Successfully saved as WAV.")
 
@@ -100,6 +85,7 @@ def start_serial_listener():
                     all_audio_data.append(data)
                     # Print "." to show a successful packet
                     print(".", end="", flush=True)
+                    save_audio_wav(data)
                 else:
                     # Didn't get the full payload, buffer was incomplete.
                     # This indicates a problem (e.g., serial buffer overrun)
@@ -108,7 +94,8 @@ def start_serial_listener():
     except KeyboardInterrupt:
         print("\nShutting down listener...")
         # [FIX] Call save_audio_data() HERE, before the function returns.
-        save_audio_wav()
+        full_data = b"".join(all_audio_data)
+        save_audio_wav(full_data, "cool file")
 
 
 if __name__ == "__main__":
