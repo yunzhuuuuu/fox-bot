@@ -14,12 +14,24 @@
 import time
 import random
 import struct
+
+# import math
+# from enum import Enum
 import robot.software.eye_display as eye_display
+
+
+# class SpinDirection(Enum):
+#     STOP = 0
+#     LEFT = 1
+#     RIGHT = 2
 
 
 class RobotBehaviors:
 
     def __init__(self, button_pressed, seen_treat):
+    # WHEEL_CIRCUMFERENCE = 8.482  # inches
+    # BETWEEN_WHEELS = 6  # inches TODO: get actual measurement
+
         # initialize robot components
         self.left_speed = 0  # 0–255
         self.right_speed = 0  # 0–255
@@ -35,8 +47,17 @@ class RobotBehaviors:
         self.in_idle_behavior = False
         self.behavior = None
 
+        # self.current_angle = 0  # 0 to 360
+        # self.l_encoder_prev = 0
+        # self.r_encoder_prev = 0
+
+        self.l_encoder_updated = 0  # TODO: update encoder values every loop
+        self.r_encoder_updated = 0
+
+        # self.spin_dir = SpinDirection.STOP
+        # self.target_angle = 0  # 0 to 360
+
         self.chase_tail_phase = 0
-        # self.direction = None
 
         self.button_pressed = button_pressed
         self.seen_treat = seen_treat
@@ -78,7 +99,7 @@ class RobotBehaviors:
         # [2]   ear servo   (0-180)
         # [3]   tail servo  (0-180)
         # [4]   eye brightness (0-1 → scaled to 0–255)
-        # [5-12]   left eye  8 bytes 
+        # [5-12]   left eye  8 bytes
         # [13-20]  right eye 8 bytes
         return struct.pack(
             "<bbBBB8B8B",
@@ -90,7 +111,6 @@ class RobotBehaviors:
             *self.left_eye.current_state,
             *self.right_eye.current_state
         )
-
 
     def sleep(self):
         """
@@ -284,12 +304,40 @@ class RobotBehaviors:
 
         # Default state until it's time to start an idle
         if now - self.last_behavior_end >= 5.0:
+        # # update angle
+        # delta_l = (
+        #     RobotBehaviors.WHEEL_CIRCUMFERENCE
+        #     * (self.l_encoder_updated - self.l_encoder_prev)
+        #     / 360
+        # )  # L wheel movement in inches
+        # delta_r = (
+        #     RobotBehaviors.WHEEL_CIRCUMFERENCE
+        #     * (self.r_encoder_updated - self.r_encoder_prev)
+        #     / 360
+        # )  # R wheel movement in inches
+        # delta_theta = (
+        #     delta_l - delta_r
+        # ) / RobotBehaviors.BETWEEN_WHEELS  # change in robot angle, in radians
+        # self.current_angle += math.degrees(delta_theta)  # add to current robot angle
+
+        # self.l_encoder_prev = self.l_encoder_updated
+        # self.r_encoder_prev = self.r_encoder_updated
             self.in_idle_behavior = True
             behaviors = [
                 self.sleep,
                 self.chase_tail,
-            ]  # add others when ready
+            ]  # add self.chase_tail and others when ready
             self.behavior = random.choice(behaviors)
+        # elif self.spin_dir != SpinDirection.STOP:
+        #     if (  # spinning left and reached desired angle
+        #         self.spin_dir == SpinDirection.LEFT
+        #         and self.current_angle > self.target_angle
+        #     ) or (  # spinning right and reached desired angle
+        #         self.spin_dir == SpinDirection.RIGHT
+        #         and self.current_angle < self.target_angle
+        #     ):
+        #         self.spin_dir = SpinDirection.STOP
+        #         self.target_angle = 0
         else:
             # Normal default state
             self.default()
