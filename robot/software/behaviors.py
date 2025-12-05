@@ -1,13 +1,15 @@
 # combines all robot components behavior for the idle state
 
 # return array:
-# Serial Data format: (14 byte packet)
-# Byte 0 = Speed to set motors to 0-255(byte)
-# Bytes 1&2 = Angle delta for robot to move 0-360(2 bytes)
-# Byte 3 = Servo angle for ears 0-180(byte), mirrored.
+# Serial Data format: (20 byte packet)
+# Byte 0&1 = Speed to set left&right motors to 0-255(byte)
+# Byte 2 = Servo angle for ears 0-180(byte), mirrored.
 #    face forward: 90, inside: decrease, outside: increase
-# Byte 4 = Servo angle for the tail 0-180(byte)
-# Bytes 6-13 = Array for the eyes
+# Byte 3 = Servo angle for the tail 0-180(byte)
+# Byte 4 = Brightness of the eyes (0-1)
+# Bytes 5-12 = Array for the left eye
+# Bytes 13-20 = Array for the right eye
+
 
 import time
 import random
@@ -19,12 +21,14 @@ class RobotBehaviors:
 
     def __init__(self):
         # initialize robot components
-        self.speed = 0  # 0–255
-        self.spin = 180  # 0–360
+        self.left_speed = 0  # 0–255
+        self.right_speed = 0  # 0–255
+        # self.spin = 180  # 0–360
         self.ear = 90  # 0–180
         self.tail = 120  # 0–180
         self.eye_brightness = 1  # for formatting
-        self.eye_object = eye_display.EyeDisplay()
+        self.left_eye = eye_display.EyeDisplay()
+        self.right_eye = eye_display.EyeDisplay()
         # self.eye = [0] * 64  # eye array (8 bytes)
 
         self.last_behavior_end = time.time()
@@ -41,7 +45,8 @@ class RobotBehaviors:
         Slowly reduces movement until static, ears face forward, neutral tail,
         and sets eyes to a centered gaze.
         """
-        self.speed = max(0, self.speed - 2)
+        self.left_speed = max(0, self.left_speed - 2)
+        self.right_speed = max(0, self.right_speed - 2)
         self.ear = 90
         self.tail = 120
         # self.eye = [
@@ -54,37 +59,38 @@ class RobotBehaviors:
         #     0b00000000,
         #     0b00000000,
         # ]
-        self.eye_object.set_state(self.eye_object.eye_with_position((1, 1)))
+        self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
+        self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
     def build_packet(self):
-        """
-        Returns 14-byte format Arduino expects:
-        <B h B B B 8s>   (14 bytes)
-        """
+        '''
+        Returns 21-byte format Arduino expects:
+        <BB B B B 8s 8s>
+        L  R  ear tail bright  leftEye  rightEye       
+        '''
         # pack:
-        # B   speed
-        # h   spin int16
-        # B   ear
-        # B   tail
-        # B   eye brightness
-        # 8s  the 8-byte eye array
-
+        # [0]   left motor  (0-255)
+        # [1]   right motor (0-255)
+        # [2]   ear servo   (0-180)
+        # [3]   tail servo  (0-180)
+        # [4]   eye brightness (0-1 → scaled to 0–255)
+        # [5-12]   left eye  8 bytes 
+        # [13-20]  right eye 8 bytes
         # alternative:
         # array[0:3] = bin(fox.speed)[2:]
         # array[4:11] = bin(fox.spin)[2:]
         # array[] ...
         return struct.pack(
-            "<BhBBB8B",
-            int(self.speed),
-            int(self.spin),
+            "<BBBBB8s8s",
+            int(self.left_speed),
+            int(self.right_speed),
             int(self.ear),
             int(self.tail),
             self.eye_brightness,
-            *self.eye_object.current_state
+            *self.left_eye.current_state,
+            *self.right_eye.current_state
         )
 
-    def look_for_treat(self):
-        pass  # TODO
 
     def sleep(self):
         """
@@ -98,8 +104,8 @@ class RobotBehaviors:
         if not hasattr(self, "_behavior_start"):
             self._behavior_start = time.time()
 
-        self.speed = 0
-        self.spin = 0
+        self.left_speed = 0
+        self.right_speed = 0
         self.ear = max(0, self.ear - 2)
         self.tail = min(180, self.tail + 3)
         # self.eye = [
@@ -112,7 +118,8 @@ class RobotBehaviors:
         #     0b00000000,
         #     0b00000000,
         # ]  # hardcoding it for now
-        self.eye_object.set_state(self.eye_object.sleeping)
+        self.left_eye.set_state(self.left_eye.sleeping)
+        self.right_eye.set_state(self.right_eye.sleeping)
 
         # when finish
         if time.time() - self._behavior_start >= 5.0:  # slept for 5 seconds
@@ -136,11 +143,13 @@ class RobotBehaviors:
             self._behavior_start = time.time()
             self.chase_tail_phase = 0
             self.tail = 45
-            self._rotate_frames = self.eye_object.eye_rotate(1)  # clockwise
+
             # print(self._rotate_frames)
             self._frame_index = 0
             self._last_frame_time = None
 
+        self._left_rotate_frames = self.left_eye.eye_rotate(1)  # clockwise
+        self._right_rotate_frames = self.right_eye.eye_rotate(0)  # counterclock
         now = time.time()
         elapsed = now - self._behavior_start
 
@@ -156,14 +165,17 @@ class RobotBehaviors:
 
         # Phase 1: Look at tail
         elif self.chase_tail_phase == 1:
-            self.eye_object.set_state(self.eye_object.eye_with_position((3, 2)))
+            self.left_eye.set_state(self.left_eye.eye_with_position((3, 2)))
+            self.right_eye.set_state(self.right_eye.eye_with_position((3, 2)))
             if elapsed > 0.8:  # look for 0.8 - 0.5 = 0.3 seconds
                 self.chase_tail_phase = 2
 
         # Phase 2: Spin and counter-tail movement
         elif self.chase_tail_phase == 2:
             if elapsed < 2:  # chases its tail for about 2 - 0.5 - 0.3 = 1.2 seconds
-                self.spin = min(360, self.spin + 2)
+                # self.spin = min(360, self.spin + 2)
+                self.left_speed = min(100, self.left_speed + 3)
+                self.right_speed = max(-100, self.right_speed - 3)
             if elapsed > 1:
                 # tail starts to move in opposite direction after 1 second, stops when angle=75
                 self.tail = max(75, self.tail - 2)
@@ -183,22 +195,49 @@ class RobotBehaviors:
                 if self._frame_index >= len(self._rotate_frames):
                     self.chase_tail_phase = 4
                 else:
-                    self.eye_object.current_state = self._rotate_frames[
+                    self.left_eye.current_state = self._left_rotate_frames[
                         self._frame_index
                     ]
-                    print(self.eye_object.current_state)
+                    self.right_eye.current_state = self._right_rotate_frames[
+                        self._frame_index
+                    ]
+                    print(self.left_eye.current_state)
 
         # Phase 4: End behavior
         if self.chase_tail_phase == 4:
             self.in_idle_behavior = False
             self.last_behavior_end = time.time()
             del self._behavior_start
-            del self._rotate_frames
             del self._frame_index
             del self._last_frame_time
 
         return None
 
+    def petted():
+        '''
+        Triggered when button on top is pressed
+        Stops any movement, smiling eyes, wag tail, move ears
+        '''
+        pass
+    
+    def wander():
+        '''
+        Wiggle and move in a certain pattern tbd
+        '''
+        pass
+    
+    def hear_melody():
+        '''
+        Spins and look around for treat, comes to the treat
+        '''
+        pass
+    
+    def see_treat():
+        '''
+        Heart eyes, wag tail
+        '''
+        pass
+    
     # more states
 
     def update(self):
@@ -243,4 +282,5 @@ if __name__ == "__main__":
         fox.chase_tail()
         array = fox.build_packet()
         print(fox.chase_tail_phase)
-        print(fox.eye_object.current_state)
+        print(fox.left_eye.current_state)
+        print(fox.right_eye.current_state)
