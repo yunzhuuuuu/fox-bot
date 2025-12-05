@@ -1,8 +1,8 @@
 # combines all robot components behavior for the idle state
 
 # return array:
-# Serial Data format: (20 byte packet)
-# Byte 0&1 = Speed to set left&right motors to 0-255(byte)
+# Serial Data format: (21 byte packet)
+# Byte 0&1 = Speed to set left&right motors to (-127)-(128)(byte)
 # Byte 2 = Servo angle for ears 0-180(byte), mirrored.
 #    face forward: 90, inside: decrease, outside: increase
 # Byte 3 = Servo angle for the tail 0-180(byte)
@@ -19,7 +19,7 @@ import robot.software.eye_display as eye_display
 
 class RobotBehaviors:
 
-    def __init__(self):
+    def __init__(self, button_pressed, seen_treat):
         # initialize robot components
         self.left_speed = 0  # 0–255
         self.right_speed = 0  # 0–255
@@ -37,6 +37,10 @@ class RobotBehaviors:
 
         self.chase_tail_phase = 0
         # self.direction = None
+
+        self.button_pressed = button_pressed
+        self.seen_treat = seen_treat
+
 
     def default(self):
         """
@@ -65,23 +69,19 @@ class RobotBehaviors:
     def build_packet(self):
         '''
         Returns 21-byte format Arduino expects:
-        <BB B B B 8s 8s>
+        <bb B B B 8s 8s>
         L  R  ear tail bright  leftEye  rightEye       
         '''
         # pack:
-        # [0]   left motor  (0-255)
-        # [1]   right motor (0-255)
+        # [0]   left motor  (-127-128)
+        # [1]   right motor (-127-128)
         # [2]   ear servo   (0-180)
         # [3]   tail servo  (0-180)
         # [4]   eye brightness (0-1 → scaled to 0–255)
         # [5-12]   left eye  8 bytes 
         # [13-20]  right eye 8 bytes
-        # alternative:
-        # array[0:3] = bin(fox.speed)[2:]
-        # array[4:11] = bin(fox.spin)[2:]
-        # array[] ...
         return struct.pack(
-            "<BBBBB8s8s",
+            "<bbBBB8B8B",
             int(self.left_speed),
             int(self.right_speed),
             int(self.ear),
@@ -153,7 +153,7 @@ class RobotBehaviors:
         now = time.time()
         elapsed = now - self._behavior_start
 
-        # Phase 0: Tail swing
+        # Phase 0: Tail wags
         if self.chase_tail_phase == 0:
             # this should take 0.5 second
             if self.tail <= 120:
@@ -172,15 +172,15 @@ class RobotBehaviors:
 
         # Phase 2: Spin and counter-tail movement
         elif self.chase_tail_phase == 2:
-            if elapsed < 2:  # chases its tail for about 2 - 0.5 - 0.3 = 1.2 seconds
+            if elapsed < 3:  # chases its tail for about 3 - 0.5 - 0.3 = 2.2 seconds
                 # self.spin = min(360, self.spin + 2)
-                self.left_speed = min(100, self.left_speed + 3)
-                self.right_speed = max(-100, self.right_speed - 3)
+                self.left_speed = 60
+                self.right_speed = -60
             if elapsed > 1:
                 # tail starts to move in opposite direction after 1 second, stops when angle=75
                 self.tail = max(75, self.tail - 2)
 
-            if elapsed > 2:
+            if elapsed > 3:
                 self.chase_tail_phase = 3
                 self._frame_index = 0
                 self._last_frame_time = now
@@ -192,7 +192,7 @@ class RobotBehaviors:
                 self._last_frame_time = now
                 self._frame_index += 1
 
-                if self._frame_index >= len(self._rotate_frames):
+                if self._frame_index >= len(self._left_rotate_frames):
                     self.chase_tail_phase = 4
                 else:
                     self.left_eye.current_state = self._left_rotate_frames[
@@ -213,31 +213,46 @@ class RobotBehaviors:
 
         return None
 
-    def petted():
+    def petted(self):
         '''
         Triggered when button on top is pressed
         Stops any movement, smiling eyes, wag tail, move ears
         '''
         pass
     
-    def wander():
+    def wander(self):
         '''
         Wiggle and move in a certain pattern tbd
         '''
         pass
     
-    def hear_melody():
+    def hear_melody(self):
         '''
         Spins and look around for treat, comes to the treat
         '''
         pass
     
-    def see_treat():
+    def see_treat(self):
         '''
         Heart eyes, wag tail
         '''
-        pass
-    
+        self.left_eye.set_state(self.left_eye.heart_left)
+        self.right_eye.set_state(self.right_eye.heart_right)
+
+        if not hasattr(self, "_wag_direction"):
+            self._wag_direction = 1  # 1 = increasing, -1 = decreasing
+
+        # change tail speed by '2' in given direction
+        self.tail += 2 * self._wag_direction   
+
+        # Reverse at bounds
+        if self.tail >= 135:
+            self.tail = 135
+            self._wag_direction = -1
+        elif self.tail <= 45:
+            self.tail = 45
+            self._wag_direction = 1
+
     # more states
 
     def update(self):
@@ -250,25 +265,40 @@ class RobotBehaviors:
 
         now = time.time()
 
+        # priority 1: petted
+        if self.button_pressed:
+            self.petted()
+            return
+        
+        # priority 2: hear melody
+
+        # priority 3: see treat
+        if self.seen_treat:
+            self.see_treat()
+            return
+        
+        # priority 4: idles
         if self.in_idle_behavior:
             self.behavior()
+            return
 
+        # Default state until it's time to start an idle
+        if now - self.last_behavior_end >= 5.0:
+            self.in_idle_behavior = True
+            behaviors = [
+                self.sleep,
+                self.chase_tail,
+            ]  # add others when ready
+            self.behavior = random.choice(behaviors)
         else:
-            # Default state until it's time to start a behavior
-            if now - self.last_behavior_end >= 10.0:
-                self.in_idle_behavior = True
-                behaviors = [
-                    self.sleep,
-                    self.chase_tail,
-                ]  # add self.chase_tail and others when ready
-                self.behavior = random.choice(behaviors)
-            else:
-                # Normal default state
-                self.default()
+            # Normal default state
+            self.default()
 
 
 if __name__ == "__main__":
-    fox = RobotBehaviors()
+    button_pressed = 0
+    seen_treat = 0
+    fox = RobotBehaviors(button_pressed, seen_treat)
     # while True:
     #     fox.update()
     #     # print(fox.tail)

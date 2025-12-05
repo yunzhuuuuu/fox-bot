@@ -12,12 +12,13 @@ def packet_to_dec(packet):
 
 def print_robot_state(fox):
     print("\n================ ROBOT STATE ================")
-    print(f"Speed:          {fox.speed}")
-    print(f"Spin:           {fox.spin}")
-    print(f"Ear angle:      {fox.ear}")
-    print(f"Tail angle:     {fox.tail}")
-    print(f"Eye brightness: {fox.eye_brightness}")
-    print(f"Eye array:      {fox.eye_object.current_state}")
+    print(f"Left speed:       {fox.left_speed}")
+    print(f"Right speed:      {fox.right_speed}")
+    print(f"Ear angle:        {fox.ear}")
+    print(f"Tail angle:       {fox.tail}")
+    print(f"Eye brightness:   {fox.eye_brightness}")
+    print(f"Left eye array:   {fox.left_eye.current_state}")
+    print(f"Right eye array:  {fox.right_eye.current_state}")
     print("=============================================")
 
 
@@ -29,7 +30,9 @@ def print_packet(packet):
 
 
 if __name__ == "__main__":
-    fox = RobotBehaviors()
+    button_pressed = 0
+    seen_treat = 1
+    fox = RobotBehaviors(button_pressed, seen_treat)
 
     # Run simulation
     while True:
