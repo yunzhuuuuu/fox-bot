@@ -57,7 +57,7 @@ void ISR_Left() {
   leftEncoderCount++;
 }
 
-byte array[] = {
+byte leftArray[] = {
   B00000000, // Row 0
   B00000000, // Row 1
   B00000000, // Row 2
@@ -65,21 +65,32 @@ byte array[] = {
   B00000000, // Row 4
   B00000000, // Row 5
   B00000000, // Row 6
-  B00000000 // Row 7
+  B00000000  // Row 7
 };
+
+byte rightArray[] = {
+  B00000000, // Row 0
+  B00000000, // Row 1
+  B00000000, // Row 2
+  B00000000, // Row 3
+  B00000000, // Row 4
+  B00000000, // Row 5
+  B00000000, // Row 6
+  B00000000  // Row 7
+};
+
 const int PATTERN_ROWS = 8; // Max number of rows in the pattern
 
-void setDisplays(int brightness, byte array[]) {
+void setDisplays(int brightness, byte leftArray[], byte rightArray[]) {
   lc.setIntensity(0, brightness); // Set the brightness from 0-15 
   lc.setIntensity(1, brightness); // Set the brightness from 0-15  
-  for (int row = 0; row < PATTERN_ROWS; row++) { // Impliment patterns
-    byte pattern = array[row];
-    lc.setRow(0, row, pattern);
-    lc.setRow(1, row, pattern);
+  for (int row = 0; row < PATTERN_ROWS; row++) { // Implement patterns
+    lc.setRow(0, row, leftArray[row]);
+    lc.setRow(1, row, rightArray[row]);
   }
 }
 
-void setMotors(int speed, int delta) {
+void setMotorsForRotation(int speed, int delta) {
   long targetPulses = abs(delta) * PULSES_PER_DEGREE;
     uint8_t leftDirection, rightDirection;
 
@@ -122,6 +133,30 @@ void setMotors(int speed, int delta) {
   m1->run(RELEASE);
   m2->run(RELEASE);
   delay(50);
+}
+
+void setMotors(int speedL, int speedR) {
+
+  if (speedL==0){
+    m1 -> run(RELEASE)
+  } else if(speedL<0){
+    m1 -> run(BACKWARD)
+    m1->setSpeed(-speedL)
+  } else{
+    m1 -> run(FORWARD)
+    m1->setSpeed(speedL)
+  }
+
+  if (speedR==0){
+    m2 -> run(RELEASE)
+  } else if(speedR<0){
+    m2 -> run(BACKWARD)
+    m2->setSpeed(-speedR)
+  } else{
+    m2 -> run(FORWARD)
+    m2->setSpeed(speedR)
+  }
+  
 }
 
 void setEars(byte ear_angle) {
@@ -170,26 +205,32 @@ void loop() {
 
     // ----------------------------------------------------------
     // Serial Data format:
-    // Byte 0 = Speed to set motors to 0-255(byte)
-    // Bytes 1&2 = Angle delta for robot to move -180-180(2 bytes)
-    // Byte 3 = Servo angle for ears 0-180(byte)
-    // Byte 4 = Servo angle for the tail 0-180(byte)
-    // Bytes 6-13 = Array for the eyes
+    // Byte 0 = Left motor speed -128-127(byte)
+    // Byte 1 = Right motor speed -128-127(byte)
+    // Byte 2 = Servo angle for ears 0-180(byte)
+    // Byte 3 = Servo angle for the tail 0-180(byte)
+    // Byte 4 = Eye brightness (0-1 -> scaled to 0-255)
+    // Bytes 5-12 = Array for left eye (8 bytes)
+    // Bytes 13-20 = Array for right eye (8 bytes)
     // ----------------------------------------------------------
     
     if (Serial.readBytes(buffer, SERIAL_PACKET_SIZE) == SERIAL_PACKET_SIZE) {
-      int receivedSpeed = (int)buffer[0];
-      int receivedDelta = (int)buffer[1] | ((int)buffer[2] << 8);
+      int receivedLeftSpeed = (int)buffer[0];
+      int receivedRightSpeed = (int)buffer[1];
       int receivedEar = (int)buffer[3];
       int receivedTail = (int)buffer[4];
       int receivedBrightness = (int)buffer[5];
 
       for (int i = 0; i < 8; i++) {
-        array[i] = buffer[6 + i];
+        leftArray[i] = buffer[5 + i];
       }
 
-      setMotors(receivedSpeed, receivedDelta);
-      setDisplays(receivedBrightness, array);
+      for (int i = 0; i < 8; i++) {
+        rightArray[i] = buffer[13 + i];
+      }
+
+      setMotors(receivedLeftSpeed, receivedRightSpeed);
+      setDisplays(receivedBrightness, leftArray, rightArray);
       setEars(receivedEar);
       setTail(receivedTail);
     }
