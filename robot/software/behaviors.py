@@ -28,7 +28,7 @@ import robot.software.eye_display as eye_display
 
 class RobotBehaviors:
 
-    def __init__(self, button_pressed, seen_treat):
+    def __init__(self, button_pressed, seen_treat, heard_melody):
     # WHEEL_CIRCUMFERENCE = 8.482  # inches
     # BETWEEN_WHEELS = 6  # inches TODO: get actual measurement
 
@@ -42,7 +42,9 @@ class RobotBehaviors:
         self.left_eye = eye_display.EyeDisplay()
         self.right_eye = eye_display.EyeDisplay()
         # self.eye = [0] * 64  # eye array (8 bytes)
-
+        self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
+        self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
+        
         self.last_behavior_end = time.time()
         self.in_idle_behavior = False
         self.behavior = None
@@ -61,6 +63,7 @@ class RobotBehaviors:
 
         self.button_pressed = button_pressed
         self.seen_treat = seen_treat
+        self.heard_melody = heard_melody
 
 
     def default(self):
@@ -111,6 +114,21 @@ class RobotBehaviors:
             *self.left_eye.current_state,
             *self.right_eye.current_state
         )
+
+    def wag_tail(self, offset=45, speed=2):
+        if not hasattr(self, "_wag_direction"):
+            self._wag_direction = 1  # 1 = increasing, -1 = decreasing
+
+        # change tail speed by '2' in given direction
+        self.tail += speed * self._wag_direction   
+
+        # Reverse at bounds
+        if self.tail >= 90 + offset:
+            self.tail = 90 + offset
+            self._wag_direction = -1
+        elif self.tail <= 90 - offset:
+            self.tail = 90 - offset
+            self._wag_direction = 1
 
     def sleep(self):
         """
@@ -236,9 +254,15 @@ class RobotBehaviors:
     def petted(self):
         '''
         Triggered when button on top is pressed
-        Stops any movement, smiling eyes, wag tail, move ears
+        Stops any movement, smiling eyes, wag tail, fold ears
         '''
-        pass
+        self.left_speed = 0
+        self.right_speed = 0
+        self.left_eye.set_state(self.left_eye.happy)
+        self.right_eye.set_state(self.right_eye.happy)
+        self.wag_tail(speed=1)
+        self.ear = 0
+
     
     def wander(self):
         '''
@@ -246,7 +270,7 @@ class RobotBehaviors:
         '''
         pass
     
-    def hear_melody(self):
+    def react_to_melody(self):
         '''
         Spins and look around for treat, comes to the treat
         '''
@@ -254,24 +278,12 @@ class RobotBehaviors:
     
     def see_treat(self):
         '''
-        Heart eyes, wag tail
+        Heart eyes, wag tail, comes to the treat
         '''
         self.left_eye.set_state(self.left_eye.heart_left)
         self.right_eye.set_state(self.right_eye.heart_right)
 
-        if not hasattr(self, "_wag_direction"):
-            self._wag_direction = 1  # 1 = increasing, -1 = decreasing
-
-        # change tail speed by '2' in given direction
-        self.tail += 2 * self._wag_direction   
-
-        # Reverse at bounds
-        if self.tail >= 135:
-            self.tail = 135
-            self._wag_direction = -1
-        elif self.tail <= 45:
-            self.tail = 45
-            self._wag_direction = 1
+        self.wag_tail()
 
     # more states
 
@@ -291,6 +303,9 @@ class RobotBehaviors:
             return
         
         # priority 2: hear melody
+        if self.heard_melody:
+            self.react_to_melody()
+            return
 
         # priority 3: see treat
         if self.seen_treat:
@@ -326,6 +341,7 @@ class RobotBehaviors:
             behaviors = [
                 self.sleep,
                 self.chase_tail,
+                self.wag_tail
             ]  # add self.chase_tail and others when ready
             self.behavior = random.choice(behaviors)
         # elif self.spin_dir != SpinDirection.STOP:
@@ -346,7 +362,8 @@ class RobotBehaviors:
 if __name__ == "__main__":
     button_pressed = 0
     seen_treat = 0
-    fox = RobotBehaviors(button_pressed, seen_treat)
+    heard_melody = 0
+    fox = RobotBehaviors(button_pressed, seen_treat, heard_melody)
     # while True:
     #     fox.update()
     #     # print(fox.tail)
