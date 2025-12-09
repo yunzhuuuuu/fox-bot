@@ -65,7 +65,6 @@ class RobotBehaviors:
         self.seen_treat = seen_treat
         self.heard_melody = heard_melody
 
-
     def default(self):
         """
         Passive idle, called when not running a special behavior.
@@ -91,11 +90,11 @@ class RobotBehaviors:
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
     def build_packet(self):
-        '''
+        """
         Returns 21-byte format Arduino expects:
         <bb B B B 8s 8s>
-        L  R  ear tail bright  leftEye  rightEye       
-        '''
+        L  R  ear tail bright  leftEye  rightEye
+        """
         # pack:
         # [0]   left motor  (-127-128)
         # [1]   right motor (-127-128)
@@ -265,9 +264,9 @@ class RobotBehaviors:
 
     
     def wander(self):
-        '''
+        """
         Wiggle and move in a certain pattern tbd
-        '''
+        """
         pass
     
     def react_to_melody(self):
@@ -275,7 +274,7 @@ class RobotBehaviors:
         Spins and look around for treat, comes to the treat
         '''
         pass
-    
+
     def see_treat(self):
         '''
         Heart eyes, wag tail, comes to the treat
@@ -301,7 +300,7 @@ class RobotBehaviors:
         if self.button_pressed:
             self.petted()
             return
-        
+
         # priority 2: hear melody
         if self.heard_melody:
             self.react_to_melody()
@@ -311,7 +310,7 @@ class RobotBehaviors:
         if self.seen_treat:
             self.see_treat()
             return
-        
+
         # priority 4: idles
         if self.in_idle_behavior:
             self.behavior()
@@ -319,24 +318,24 @@ class RobotBehaviors:
 
         # Default state until it's time to start an idle
         if now - self.last_behavior_end >= 5.0:
-        # # update angle
-        # delta_l = (
-        #     RobotBehaviors.WHEEL_CIRCUMFERENCE
-        #     * (self.l_encoder_updated - self.l_encoder_prev)
-        #     / 360
-        # )  # L wheel movement in inches
-        # delta_r = (
-        #     RobotBehaviors.WHEEL_CIRCUMFERENCE
-        #     * (self.r_encoder_updated - self.r_encoder_prev)
-        #     / 360
-        # )  # R wheel movement in inches
-        # delta_theta = (
-        #     delta_l - delta_r
-        # ) / RobotBehaviors.BETWEEN_WHEELS  # change in robot angle, in radians
-        # self.current_angle += math.degrees(delta_theta)  # add to current robot angle
+            # # update angle
+            # delta_l = (
+            #     RobotBehaviors.WHEEL_CIRCUMFERENCE
+            #     * (self.l_encoder_updated - self.l_encoder_prev)
+            #     / 360
+            # )  # L wheel movement in inches
+            # delta_r = (
+            #     RobotBehaviors.WHEEL_CIRCUMFERENCE
+            #     * (self.r_encoder_updated - self.r_encoder_prev)
+            #     / 360
+            # )  # R wheel movement in inches
+            # delta_theta = (
+            #     delta_l - delta_r
+            # ) / RobotBehaviors.BETWEEN_WHEELS  # change in robot angle, in radians
+            # self.current_angle += math.degrees(delta_theta)  # add to current robot angle
 
-        # self.l_encoder_prev = self.l_encoder_updated
-        # self.r_encoder_prev = self.r_encoder_updated
+            # self.l_encoder_prev = self.l_encoder_updated
+            # self.r_encoder_prev = self.r_encoder_updated
             self.in_idle_behavior = True
             behaviors = [
                 self.sleep,
