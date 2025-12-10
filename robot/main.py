@@ -28,8 +28,13 @@ if __name__ == "__main__":
     fox = RobotBehaviors(button_pressed, seen_treat, is_melody)
 
     while True:
+        # recieved data from arduino
+        data = arduino.readline().decode()
+        if len(data) > 0:
+            print("Received: " + data)
+
         fox.update()
         packet = fox.build_packet()
-        arduino.write((packet + "\n").encode()) 
+        arduino.write(packet)
         print_robot_state(fox)
         time.sleep(0.05)  # 20 hz
