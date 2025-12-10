@@ -14,8 +14,8 @@
 import time
 import random
 import struct
+import math
 
-# import math
 # from enum import Enum
 import robot.software.eye_display as eye_display
 
@@ -249,6 +249,24 @@ class RobotBehaviors:
             del self._last_frame_time
 
         return None
+
+    def wiggle(self, elapsed):
+        """
+        Changes left and right motor speeds to wiggle
+
+        Args:
+            elapsed (number): Time since outer behavior started, in seconds
+
+        Returns:
+            None
+        """
+
+        if math.floor(elapsed) % 2 == 0:  # even number of seconds elapsed
+            self.left_speed = 60
+            self.right_speed = -50
+        else:
+            self.left_speed = 50
+            self.right_speed = -60
 
     def petted(self):
         '''
