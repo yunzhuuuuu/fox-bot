@@ -4,6 +4,7 @@ from robot.software.behaviors import RobotBehaviors
 import serial
 import time
 
+
 def print_robot_state(fox):
     print("\n================ ROBOT STATE ================")
     print(f"Left speed:       {fox.left_speed}")
@@ -16,11 +17,13 @@ def print_robot_state(fox):
     print("Raw bytes:", packet)
     print("=============================================")
 
-if __name__ == "__main__":
-    port = '/dev/ttyACM0'
-    arduino = serial.Serial(port, 9600)
-    time.sleep(1)  # wait for Arduino reset after serial connection
 
+if __name__ == "__main__":
+    print("Started run...")
+    port = "/dev/ttyACM0"
+    arduino = serial.Serial(port, 115200)
+    time.sleep(1)  # wait for Arduino reset after serial connection
+    print("Waking up...")
     button_pressed = 0
     seen_treat = 0
     is_melody = 0
@@ -28,13 +31,18 @@ if __name__ == "__main__":
     fox = RobotBehaviors(button_pressed, seen_treat, is_melody)
 
     while True:
+        print("Starting loop...")
         # recieved data from arduino
         data = arduino.readline().decode()
         if len(data) > 0:
             print("Received: " + data)
-
+        else:
+            print("No data...")
         fox.update()
+        print("foxbot updated...")
         packet = fox.build_packet()
         arduino.write(packet)
+        print("Sent packet...")
         print_robot_state(fox)
-        time.sleep(0.05)  # 20 hz
+        time.sleep(0.01)  # 20 hz
+        print("Sleeping...")
