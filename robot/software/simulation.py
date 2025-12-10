@@ -30,9 +30,10 @@ def print_packet(packet):
 
 
 if __name__ == "__main__":
-    button_pressed = 0
-    seen_treat = 1
-    fox = RobotBehaviors(button_pressed, seen_treat)
+    button_pressed = 1
+    seen_treat = 0
+    heard_melody = 0
+    fox = RobotBehaviors(button_pressed, seen_treat, heard_melody)
 
     # Run simulation
     while True:
