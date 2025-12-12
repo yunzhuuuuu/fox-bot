@@ -18,7 +18,7 @@ import math
 
 # from enum import Enum
 import robot.software.eye_display as eye_display
-
+from robot.software.berry_detection import BerryDetection
 
 # class SpinDirection(Enum):
 #     STOP = 0
@@ -29,8 +29,8 @@ import robot.software.eye_display as eye_display
 class RobotBehaviors:
 
     def __init__(self, button_pressed, seen_treat, heard_melody):
-    # WHEEL_CIRCUMFERENCE = 8.482  # inches
-    # BETWEEN_WHEELS = 6  # inches TODO: get actual measurement
+        # WHEEL_CIRCUMFERENCE = 8.482  # inches
+        # BETWEEN_WHEELS = 6  # inches TODO: get actual measurement
 
         # initialize robot components
         self.left_speed = 0  # 0–255
@@ -44,7 +44,9 @@ class RobotBehaviors:
         # self.eye = [0] * 64  # eye array (8 bytes)
         self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
-        
+
+        self.berry_detection = BerryDetection()
+
         self.last_behavior_end = time.time()
         self.in_idle_behavior = False
         self.behavior = None
@@ -119,7 +121,7 @@ class RobotBehaviors:
             self._wag_direction = 1  # 1 = increasing, -1 = decreasing
 
         # change tail speed by '2' in given direction
-        self.tail += speed * self._wag_direction   
+        self.tail += speed * self._wag_direction
 
         # Reverse at bounds
         if self.tail >= 90 + offset:
@@ -269,10 +271,10 @@ class RobotBehaviors:
             self.right_speed = -60
 
     def petted(self):
-        '''
+        """
         Triggered when button on top is pressed
         Stops any movement, smiling eyes, wag tail, fold ears
-        '''
+        """
         self.left_speed = 0
         self.right_speed = 0
         self.left_eye.set_state(self.left_eye.happy)
@@ -280,23 +282,38 @@ class RobotBehaviors:
         self.wag_tail(speed=1)
         self.ear = 0
 
-    
     def wander(self):
         """
         Wiggle and move in a certain pattern tbd
         """
         pass
-    
+
     def react_to_melody(self):
-        '''
+        """
         Spins and look around for treat, comes to the treat
-        '''
-        pass
+        """
+        LEFT_THRESHOLD = 1400
+        RIGHT_THRESHOLD = 1800  # TODO: fix these values
+
+        berry_position = self.berry_detection.get_berry_position()
+        if berry_position is None:
+            return
+
+        x_position = berry_position[0]
+        if x_position > RIGHT_THRESHOLD:  # berry is to the right
+            self.left_speed = 50
+            self.right_speed = -50
+        elif x_position > LEFT_THRESHOLD:  # berry is in the middle
+            self.left_speed = 50
+            self.right_speed = 50
+        else:  # berry is to the left, or no berry
+            self.left_speed = -50
+            self.right_speed = 50
 
     def see_treat(self):
-        '''
+        """
         Heart eyes, wag tail, comes to the treat
-        '''
+        """
         self.left_eye.set_state(self.left_eye.heart_left)
         self.right_eye.set_state(self.right_eye.heart_right)
 
@@ -358,7 +375,7 @@ class RobotBehaviors:
             behaviors = [
                 self.sleep,
                 self.chase_tail,
-                self.wag_tail
+                self.wag_tail,
             ]  # add self.chase_tail and others when ready
             self.behavior = random.choice(behaviors)
         # elif self.spin_dir != SpinDirection.STOP:
