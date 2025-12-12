@@ -46,6 +46,21 @@ const float PULSES_PER_DEGREE = (PI * TRACK_WIDTH_CM / 360.0) / WHEEL_CIRCUMFERE
 volatile long rightEncoderCount = 0;
 volatile long leftEncoderCount = 0;
 
+int receivedLeftSpeed = 0;
+int receivedRightSpeed = 0;
+int receivedEar = 90;
+int receivedTail = 90;
+int receivedBrightness = 5;
+
+int l_receivedLeftSpeed = 0;
+int l_receivedRightSpeed = 0;
+int l_receivedEar = 90;
+int l_receivedTail = 90;
+int l_receivedBrightness = 5;
+
+
+
+
 // Serial Comm Constants
 byte SERIAL_PACKET_SIZE = 14;
 
@@ -138,23 +153,23 @@ void setMotorsForRotation(int speed, int delta) {
 void setMotors(int speedL, int speedR) {
 
   if (speedL==0){
-    m1 -> run(RELEASE)
+    m1 -> run(RELEASE);
   } else if(speedL<0){
-    m1 -> run(BACKWARD)
-    m1->setSpeed(-speedL)
+    m1 -> run(BACKWARD);
+    m1->setSpeed(-speedL);
   } else{
-    m1 -> run(FORWARD)
-    m1->setSpeed(speedL)
+    m1 -> run(FORWARD);
+    m1->setSpeed(speedL);
   }
 
   if (speedR==0){
-    m2 -> run(RELEASE)
+    m2 -> run(RELEASE);
   } else if(speedR<0){
-    m2 -> run(BACKWARD)
-    m2->setSpeed(-speedR)
+    m2 -> run(BACKWARD);
+    m2->setSpeed(-speedR);
   } else{
-    m2 -> run(FORWARD)
-    m2->setSpeed(speedR)
+    m2 -> run(FORWARD);
+    m2->setSpeed(speedR);
   }
   
 }
@@ -229,10 +244,20 @@ void loop() {
         rightArray[i] = buffer[13 + i];
       }
 
-      setMotors(receivedLeftSpeed, receivedRightSpeed);
       setDisplays(receivedBrightness, leftArray, rightArray);
-      setEars(receivedEar);
-      setTail(receivedTail);
+
+      if ((l_receivedLeftSpeed != receivedLeftSpeed) || (l_receivedRightSpeed != receivedRightSpeed)) {
+        setMotors(receivedLeftSpeed, receivedRightSpeed);
+      }
+
+      if (l_receivedEar != receivedEar) {
+        setEars(receivedEar);
+      }
+      
+      if (l_receivedTail != receivedTail) {
+        setEars(receivedTail);
+      }
+
     }
   }
 }
