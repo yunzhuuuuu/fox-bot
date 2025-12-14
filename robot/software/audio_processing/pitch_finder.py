@@ -1,23 +1,6 @@
-# Pitch finder example
 import os
 import librosa
 import numpy as np
-import matplotlib.pyplot as plt
-
-# frequencies = {
-#     "C4": 261,
-#     "C#4": 277,
-#     "D": 293,
-#     "D#": 311,
-#     "E": 329,
-#     "F": 349,
-#     "F#": 369,
-#     "G": 392,
-#     "G#": 415,
-#     "A": 440,
-#     "A#": 466,
-#     "B": 492,
-# }
 
 
 def load_audio(filename: str):
@@ -66,6 +49,16 @@ def pitch_to_note(f0, min_instances=5):
 
 
 def check_melody(notes, melody):
+    """
+    Check if given notes match a melody
+
+    Args:
+        notes (List<String>): List of note names
+        melody (List<String>): List of note names
+
+    Returns:
+        Boolean: Boolean representing whether the melody matches
+    """
     for i in range(len(notes) - len(melody) + 1):
         if np.array_equal(notes[i : i + len(melody)], melody):
             return True
@@ -75,7 +68,14 @@ def check_melody(notes, melody):
 def run_pitch_finder(audio_path, min_instances=5):
     """
     High-level wrapper that loads audio, detects pitch, and checks melody.
-    Returns True if certain melody is found, otherwise false
+
+    Args:
+        audio_path (String): Filepath leading to wav file
+        min_instances (int): Minimum times a note has to appear to be taken into account in the
+            melody. Defaults to 5.
+
+    Returns:
+        Boolean: True if certain melody is found, otherwise false
     """
     melody = np.array(["A3", "A♯3", "G3", "A3", "D3", "A3", "F3", "C4"])
     y, sr = load_audio(audio_path)
@@ -90,24 +90,3 @@ def run_pitch_finder(audio_path, min_instances=5):
 
 if __name__ == "__main__":
     run_pitch_finder("output_audio.wav", 8)
-
-
-# fig, ax = plt.subplots()  # Create a figure containing a single Axes.
-# ax.plot(f0)  # Plot some data on the Axes.
-
-# plt.axhline(261)
-# plt.axhline(277)
-# plt.axhline(293)
-# plt.axhline(311)
-# plt.axhline(329)
-# plt.axhline(349)
-# plt.axhline(369)
-# plt.axhline(392)
-# plt.axhline(415)
-# plt.axhline(440)
-# plt.axhline(466)
-# plt.axhline(493)
-# plt.axhline(523)
-# plt.axhline(554)
-
-# plt.show()
