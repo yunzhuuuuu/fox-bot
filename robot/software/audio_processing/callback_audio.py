@@ -1,78 +1,88 @@
-import pyaudio
 import time
 import wave
-
+import os
+import pyaudio
 import pitch_finder as pf
-
-WIDTH = 2
-CHANNELS = 1
-RATE = 44100
-
-p = pyaudio.PyAudio()
-
-frames = []
+import numpy as np
 
 
-def callback(in_data, frame_count, time_info, status):
-    global frames
-    frames.append(in_data)
+class collectAudio:
 
-    return in_data, pyaudio.paContinue
+    WIDTH = 2
+    CHANNELS = 1
+    RATE = 44100
 
+    MELODY = np.array(["A4", "A♯4", "G4", "A4", "D4", "A4", "F4", "C5"])
 
-stream = p.open(
-    format=p.get_format_from_width(WIDTH),
-    channels=CHANNELS,
-    rate=RATE,
-    input=True,
-    output=True,
-    stream_callback=callback,
-)
+    def __init__(self):
+        self.saved_notes = []
 
-stream.start_stream()
+        self.p = pyaudio.PyAudio()
+        self.frames = []
 
-last_sample = time.time()
+        def callback(in_data, frame_count, time_info, status):
+            """
+            Callback function to be called for audio data
+            """
+            self.frames.append(in_data)
+            return in_data, pyaudio.paContinue
 
-while stream.is_active():
-    if time.time() - last_sample >= 2:
-        with wave.open(
-            "output.wav", "wb"
-        ) as wf:  # TODO: put this in the correct directory
-            wf.setnchannels(CHANNELS)
-            wf.setsampwidth(p.get_sample_size(pyaudio.paInt16))
-            wf.setframerate(RATE)
-            wf.writeframes(b"".join(frames))
+        self.stream = self.p.open(
+            format=self.p.get_format_from_width(collectAudio.WIDTH),
+            channels=collectAudio.CHANNELS,
+            rate=collectAudio.RATE,
+            input=True,
+            output=False,
+            stream_callback=callback,
+        )
 
-        y, sr = pf.load_audio("output.wav")
-        f0 = pf.estimate_pitch(y, sr)
-        print("f0:", f0)
-        if len(f0) != 0:
-            notes = pf.pitch_to_note(f0)
-            print("notes:", notes)
+        self.last_sample = time.time()
+        self.stream.start_stream()
 
-        last_sample = time.time()
-        frames = []
+    def __del__(self):
+        self.stream.stop_stream()
+        self.stream.close()
 
-    time.sleep(0.1)
+        self.p.terminate()
 
-stream.stop_stream()
-stream.close()
+    def detect_melody(self, save_interval=2):
+        """
+        Save audio if more than 2 seconds has passed since the last save, and detect notes
 
-p.terminate()
+        Args:
+            save_interval (Int) (optional): Number of seconds between each save
 
+        Returns:
+            Boolean: Whether or not the notes match the set melody
+        """
+        if time.time() - self.last_sample >= save_interval:
 
-"""
+            media_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media")
+            audio_path = os.path.join(media_dir, "output.wav")
+            with wave.open(audio_path, "wb") as wf:
+                wf.setnchannels(collectAudio.CHANNELS)
+                wf.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
+                wf.setframerate(collectAudio.RATE)
+                wf.writeframes(b"".join(self.frames))
 
-declare callback function
-open and start stream
+            y, sr = pf.load_audio("output.wav")
+            f0 = pf.estimate_pitch(y, sr)
+            if len(f0) != 0:
+                notes = pf.pitch_to_note(f0)
+                # remove duplicate if last note of existing list and first note of new list are the same
+                try:
+                    if self.saved_notes[-1] == notes[0]:
+                        notes = notes[1:]
+                finally:
+                    self.saved_notes.extend(notes)
+                print(str(self.saved_notes).encode("utf-8"))
 
-initialize series of notes
+                is_melody = pf.check_melody(self.saved_notes, collectAudio.MELODY)
+                if is_melody:
+                    self.saved_notes = []
+                return is_melody
 
-in main loop:
-    every .02 seconds (or whatever), check to see if 1 second has passed
-    if 1 second has passed:
-        save it to a file and run audio processing to get notes
-        add new notes to series of notes
-        check for melody
+            self.last_sample = time.time()
+            self.frames = []
 
-"""
+            return False

@@ -30,7 +30,6 @@ def pitch_to_note(f0, min_instances=5):
     keeping only notes that appear consecutively at least a certain amount of times.
     """
     notes = librosa.hz_to_note(f0)
-    print(notes)
     cleaned_notes = []
     count = 1
 
@@ -39,13 +38,13 @@ def pitch_to_note(f0, min_instances=5):
             count += 1
         else:
             if count >= min_instances:
-                cleaned_notes.append(notes[i - 1])
+                cleaned_notes.append(str(notes[i - 1]))
             count = 1
     # Handle last sequence
     if count >= min_instances:
-        cleaned_notes.append(notes[-1])
+        cleaned_notes.append(str(notes[-1]))
 
-    return np.array(cleaned_notes)
+    return cleaned_notes
 
 
 def check_melody(notes, melody):
