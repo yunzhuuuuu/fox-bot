@@ -1,5 +1,6 @@
 import time
 from robot.software.behaviors import RobotBehaviors
+from robot.software.behavior_manager import StateManager
 
 
 def packet_to_hex(packet):
@@ -19,6 +20,8 @@ def print_robot_state(fox):
     print(f"Eye brightness:   {fox.eye_brightness}")
     print(f"Left eye array:   {fox.left_eye.current_state}")
     print(f"Right eye array:  {fox.right_eye.current_state}")
+    print(f"State:            {fox.state}")
+    print(f"Behavior:         {fox.behavior}")
     print("=============================================")
 
 
@@ -30,17 +33,17 @@ def print_packet(packet):
 
 
 if __name__ == "__main__":
-    button_pressed = 1
+    button_pressed = 0
     seen_treat = 0
     heard_melody = 0
-    fox = RobotBehaviors(button_pressed, seen_treat, heard_melody)
+    state_manager = StateManager(button_pressed, seen_treat, heard_melody)
+    fox = RobotBehaviors(state_manager)
 
     # Run simulation
     while True:
-        fox.update()
+        state_manager.update_state()
+        fox.update_bahavior()
+        fox.behavior()
         packet = fox.build_packet()
-
         print_robot_state(fox)
-        print_packet(packet)
-
-        time.sleep(0.05)
+        time.sleep(0.02)  # 50 hz

@@ -1,17 +1,13 @@
 import time
 import random
-import struct
-import math
-import robot.software.eye_display as eye_display
+
 from robot.software.berry_detection import BerryDetection
-from robot.software.behaviors import RobotBehaviors
 from robot.software.audio_processing.word_detection import WordDetection
 
 class StateManager:
 
     def __init__(self, button_pressed, seen_treat, heard_melody):
         self.berry_detection = BerryDetection()
-        self.behaviors = RobotBehaviors()
         self.word_detector = WordDetection()
 
         self.button_pressed = button_pressed
@@ -31,13 +27,14 @@ class StateManager:
             }
         
         self.idles = ["sleep", "chase_tail", "wag_tail"]
-        self.idle_duration = {"sleep": 5, "chase_tail": 4, "wag_tail": 3}
+        self.idle_duration = {"sleep": 5, "chase_tail": 5, "wag_tail": 3}
+        # active behavior durations are in their run signal logics
 
         self.run_signal = 0
         self.state = "default"
-        self.behavior = self.behaviors.default
 
         self.command = None
+        self.now = None
         self.default_start = None
         self.idle_start = None
         self.petted_start = None
@@ -57,7 +54,7 @@ class StateManager:
         if self.heard_melody:
             self.look_for_treat_start = time.time()
 
-        if self.look_for_treat_start is not None and now - self.look_for_treat_start <= 20: # look for treat for at most 20 sec
+        if self.look_for_treat_start is not None and now - self.look_for_treat_start <= 25: # look for treat for at most 20 sec
             self.run_signals["run_look_for_treat"] = 1
         else:
             self.run_signals["run_look_for_treat"] = 0
@@ -83,8 +80,6 @@ class StateManager:
         # TODO: set to 0 when done
         # if self.spin_done:
 
-    # TODO: chase tail phase update
-
     def update_signal(self, now):
         self.update_petted(now)
         self.update_melody(now)
@@ -97,25 +92,26 @@ class StateManager:
                 self.state = state
                 break # once find an active signal, stop enumerating
 
-    def update_state(self, now):
+    def update_state(self):
+        self.now = time.time()
         # update incoming signals and run corresponding active behavior
-        self.update_signal(now)
+        self.update_signal(self.now)
 
         # if there's no active behavior running, run idle-default loop
         if self.run_signal == 0:
             # was in default
             if self.state == "default":
                 if self.default_start is None:
-                    self.default_start = now
+                    self.default_start = self.now
 
-                if now - self.default_start >= 5:
+                if self.now - self.default_start >= 5:
                     self.state = random.choice(self.idles)
-                    self.idle_start = now
+                    self.idle_start = self.now
 
             # was running idle
             elif self.state in self.idles:
                 duration = self.idle_duration[self.state]
-                if now - self.idle_start >= duration:
+                if self.now - self.idle_start >= duration:
                     self.state = "default"
                     self.default_start = None
                     self.idle_start = None
@@ -123,28 +119,5 @@ class StateManager:
             # was running an active behavior but just ended
             else:
                 self.state = "default"
-                self.default_start = now
+                self.default_start = self.now
 
-    def update(self):
-        now = time.time()
-        self.update_state(now)
-
-        match self.state:
-            case "run_petted":
-                self.behavior = self.behaviors.petted
-            case "run_look_for_treat":
-                self.behavior = self.behaviors.look_for_treat
-            case "run_spin":
-                self.behavior = self.behaviors.spin
-            case "run_circle":
-                self.behavior = self.behaviors.circle
-            case "run_square":
-                self.behavior = self.behaviors.square
-            case "sleep":
-                self.behavior = self.behaviors.sleep
-            case "chase_tail":
-                self.behavior = self.behaviors.chase_tail
-            case "wag_tail":
-                self.behavior = self.behaviors.wag_tail
-            case _:
-                self.behavior = self.behaviors.default
