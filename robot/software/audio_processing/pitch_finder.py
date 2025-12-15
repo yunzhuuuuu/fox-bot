@@ -87,5 +87,5 @@ def run_pitch_finder(audio_path, min_instances=5):
     return is_melody
 
 
-if __name__ == "__main__":
-    run_pitch_finder("output_audio.wav", 8)
+# if __name__ == "__main__":
+#     run_pitch_finder("output_audio.wav", 8)

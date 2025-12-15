@@ -165,8 +165,9 @@ class RobotBehaviors:
 
         need to test on robot and adjust all angles and time
         """
+        print(elapsed)
         # record the time it starts
-        if not hasattr(self, "_behavior_start"):
+        if not hasattr(self, "_frame_index"):
             self.tail = 45
             self._frame_index = 0
             self._last_frame_time = 3
@@ -204,7 +205,8 @@ class RobotBehaviors:
             if elapsed - self._last_frame_time > 0.1:
                 self._last_frame_time += 0.1
                 self._frame_index = (self._frame_index + 1) % len(self._left_rotate_frames)
-
+                print(self._frame_index)
+                print(self._last_frame_time)
             self.left_eye.current_state = self._left_rotate_frames[
                 self._frame_index
             ]
@@ -293,7 +295,7 @@ class RobotBehaviors:
 
 
     def spin(self):
-        pass
+        print("Run spin")
 
     def circle(self):
         pass

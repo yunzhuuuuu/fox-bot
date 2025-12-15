@@ -1,6 +1,7 @@
 import time
 import robot.software.audio_processing.pitch_finder as pf
 from robot.software.behaviors import RobotBehaviors
+from robot.software.behavior_manager import StateManager
 import serial
 import time
 
@@ -25,24 +26,28 @@ if __name__ == "__main__":
     time.sleep(1)  # wait for Arduino reset after serial connection
     print("Waking up...")
     button_pressed = 0
-    seen_treat = 0
-    is_melody = 0
-    # is_melody = pf.run_pitch_finder("output_audio.wav", 8)
-    fox = RobotBehaviors(button_pressed, seen_treat, is_melody)
+    heard_melody = 0
+    state_manager = StateManager(button_pressed, heard_melody)
+    fox = RobotBehaviors(state_manager)
 
     while True:
         print("Starting loop...")
         # recieved data from arduino
-        data = arduino.readline().decode()
-        if len(data) > 0:
-            print("Received: " + data)
-        else:
-            print("No data...")
-        fox.update()
+        # data = arduino.readline().decode()
+        # if len(data) > 0:
+        #     print("Received: " + data)
+        # else:
+        #     print("No data...")
+
+        state_manager.update_state()
+        fox.update_bahavior()
+        fox.behavior()
         print("foxbot updated...")
+
         packet = fox.build_packet()
         arduino.write(packet)
         print("Sent packet...")
+        
         print_robot_state(fox)
-        time.sleep(0.01)  # 20 hz
+        time.sleep(0.02)  # 50 hz
         print("Sleeping...")

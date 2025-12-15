@@ -6,12 +6,11 @@ from robot.software.audio_processing.word_detection import WordDetection
 
 class StateManager:
 
-    def __init__(self, button_pressed, seen_treat, heard_melody):
+    def __init__(self, button_pressed, heard_melody):
         self.berry_detection = BerryDetection()
         self.word_detector = WordDetection()
 
         self.button_pressed = button_pressed
-        self.seen_treat = seen_treat
         self.heard_melody = heard_melody
 
         # if run_signal is 1, the robot should be doing this behavior, if 0, it should not
@@ -66,7 +65,7 @@ class StateManager:
             # heard some command
             self.run_signals["run_spin"] = 0
             self.run_signals["run_circle"] = 0
-            self.run_signals["run_square"] = 0 
+            self.run_signals["run_square"] = 0
 
             if self.command == "spin":
                 self.run_signals["run_spin"] = 1

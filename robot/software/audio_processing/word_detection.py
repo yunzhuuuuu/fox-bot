@@ -38,11 +38,11 @@ class WordDetection:
         
         return None  # no command this cycle
     
-detector=WordDetection()
+# detector=WordDetection()
 
 # while True:
 #     cmd = detector.read_cmd()
-#     # print(cmd)
+#     print(cmd)
 #     if cmd == 'spin':
 #         print('set run_spin to high')
 #     time.sleep(0.02)

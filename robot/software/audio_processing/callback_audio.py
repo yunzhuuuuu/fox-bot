@@ -2,11 +2,11 @@ import time
 import wave
 import os
 import pyaudio
-import pitch_finder as pf
+import robot.software.audio_processing.pitch_finder as pf
 import numpy as np
 
 
-class collectAudio:
+class CollectAudio:
 
     WIDTH = 2
     CHANNELS = 1
@@ -28,9 +28,9 @@ class collectAudio:
             return in_data, pyaudio.paContinue
 
         self.stream = self.p.open(
-            format=self.p.get_format_from_width(collectAudio.WIDTH),
-            channels=collectAudio.CHANNELS,
-            rate=collectAudio.RATE,
+            format=self.p.get_format_from_width(CollectAudio.WIDTH),
+            channels=CollectAudio.CHANNELS,
+            rate=CollectAudio.RATE,
             input=True,
             output=False,
             stream_callback=callback,
@@ -60,9 +60,9 @@ class collectAudio:
             media_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media")
             audio_path = os.path.join(media_dir, "output.wav")
             with wave.open(audio_path, "wb") as wf:
-                wf.setnchannels(collectAudio.CHANNELS)
+                wf.setnchannels(CollectAudio.CHANNELS)
                 wf.setsampwidth(self.p.get_sample_size(pyaudio.paInt16))
-                wf.setframerate(collectAudio.RATE)
+                wf.setframerate(CollectAudio.RATE)
                 wf.writeframes(b"".join(self.frames))
 
             y, sr = pf.load_audio("output.wav")
@@ -77,7 +77,7 @@ class collectAudio:
                     self.saved_notes.extend(notes)
                 print(str(self.saved_notes).encode("utf-8"))
 
-                is_melody = pf.check_melody(self.saved_notes, collectAudio.MELODY)
+                is_melody = pf.check_melody(self.saved_notes, CollectAudio.MELODY)
                 if is_melody:
                     self.saved_notes = []
                 return is_melody
