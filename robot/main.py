@@ -6,7 +6,7 @@ import serial
 import time
 
 
-def print_robot_state(fox):
+def print_robot_state(fox, state_manager):
     print("\n================ ROBOT STATE ================")
     print(f"Left speed:       {fox.left_speed}")
     print(f"Right speed:      {fox.right_speed}")
@@ -15,6 +15,8 @@ def print_robot_state(fox):
     print(f"Eye brightness:   {fox.eye_brightness}")
     print(f"Left eye array:   {fox.left_eye.current_state}")
     print(f"Right eye array:  {fox.right_eye.current_state}")
+    print(f"State:            {fox.state}")
+    print(f"Word command:     {state_manager.command}")
     print("Raw bytes:", packet)
     print("=============================================")
 
@@ -47,7 +49,7 @@ if __name__ == "__main__":
         packet = fox.build_packet()
         arduino.write(packet)
         print("Sent packet...")
-        
-        print_robot_state(fox)
+
+        print_robot_state(fox, state_manager)
         time.sleep(0.02)  # 50 hz
         print("Sleeping...")
