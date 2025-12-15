@@ -182,25 +182,23 @@ class RobotBehaviors:
 
 
         # Phase 1: Look at tail
-        elif elapsed < 0.8: # look for 0.8 - 0.5 = 0.3 seconds
+        elif elapsed < 1: # look for 1 - 0.5 = 0.5 seconds
             self.left_eye.set_state(self.left_eye.eye_with_position((3, 2)))
             self.right_eye.set_state(self.right_eye.eye_with_position((3, 2)))
 
         # Phase 2: Spin and counter-tail movement
-        elif elapsed < 1: # chases its tail for about 3 - 0.5 - 0.3 = 2.2 seconds
-                # self.spin = min(360, self.spin + 2)
+        elif elapsed < 2: # chases its tail for about 4 - 1 = 3 seconds
                 self.left_speed = 60
                 self.right_speed = -60
 
-        elif elapsed < 3: 
-                # self.spin = min(360, self.spin + 2)
+        elif elapsed < 4:
                 self.left_speed = 60
                 self.right_speed = -60
                 # tail starts to move in opposite direction after 1 second, stops when angle=75
                 self.tail = max(75, self.tail - 2)
 
         # Phase 3: Dizzy animation
-        elif elapsed < 5:
+        elif elapsed < 6:
             # Change frames every 0.1s
             if elapsed - self._last_frame_time > 0.1:
                 self._last_frame_time += 0.1
@@ -295,7 +293,8 @@ class RobotBehaviors:
 
 
     def spin(self):
-        print("Run spin")
+        self.left_speed = -50
+        self.right_speed = 50
 
     def circle(self):
         pass

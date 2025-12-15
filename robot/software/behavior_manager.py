@@ -26,7 +26,7 @@ class StateManager:
             }
         
         self.idles = ["sleep", "chase_tail", "wag_tail"]
-        self.idle_duration = {"sleep": 5, "chase_tail": 5, "wag_tail": 3}
+        self.idle_duration = {"sleep": 5, "chase_tail": 8, "wag_tail": 3}
         # active behavior durations are in their run signal logics
 
         self.run_signal = 0
@@ -38,6 +38,7 @@ class StateManager:
         self.idle_start = None
         self.petted_start = None
         self.look_for_treat_start = None
+        self.word_command_start = None
         self.chase_tail_phase = 0
 
     def update_petted(self, now):
@@ -58,31 +59,27 @@ class StateManager:
         else:
             self.run_signals["run_look_for_treat"] = 0
 
-    def update_word_command(self):
-        self.command = self.word_detector.read_cmd()
-        
-        if self.command is not None:
-            # heard some command
+    def update_word_command(self, now):
+        new_command = self.word_detector.read_cmd()
+        if new_command is not None:
+            self.command = new_command
+            self.word_command_start = now
+
+        if self.command is not None and now - self.word_command_start <= 10:
+            self.run_signals["run_spin"] = 1 if self.command == "spin" else 0
+            self.run_signals["run_circle"] = 1 if self.command == "circle" else 0
+            self.run_signals["run_square"] = 1 if self.command == "square" else 0
+
+        else:
             self.run_signals["run_spin"] = 0
             self.run_signals["run_circle"] = 0
             self.run_signals["run_square"] = 0
-
-            if self.command == "spin":
-                self.run_signals["run_spin"] = 1
-
-            elif self.command == "circle":
-                self.run_signals["run_circle"] = 1
-            
-            elif self.command == "square":
-                self.run_signals["run_square"] = 1
-
-        # TODO: set to 0 when done
-        # if self.spin_done:
+            self.command = None
 
     def update_signal(self, now):
         self.update_petted(now)
         self.update_melody(now)
-        self.update_word_command()
+        self.update_word_command(now)
 
         self.run_signal = 0
         for state, signal in self.run_signals.items():
