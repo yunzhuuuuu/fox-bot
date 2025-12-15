@@ -170,7 +170,7 @@ class RobotBehaviors:
         if not hasattr(self, "_frame_index"):
             self.tail = 45
             self._frame_index = 0
-            self._last_frame_time = 3
+            self._last_frame_time = 6
 
         # Phase 0: Tail wags
         if elapsed < 0.5:

@@ -26,7 +26,7 @@ class StateManager:
             }
         
         self.idles = ["sleep", "chase_tail", "wag_tail"]
-        self.idle_duration = {"sleep": 5, "chase_tail": 12, "wag_tail": 3}
+        self.idle_duration = {"sleep": 5, "chase_tail": 10, "wag_tail": 3}
         # active behavior durations are in their run signal logics
 
         self.run_signal = 0
