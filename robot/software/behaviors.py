@@ -112,7 +112,7 @@ class RobotBehaviors:
         self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
-    def wag_tail(self, offset=45, speed=2):
+    def wag_tail(self, offset=45, speed=4):
         # change tail speed by '2' in given direction
         self.tail += speed * self._wag_direction
 
@@ -174,12 +174,9 @@ class RobotBehaviors:
 
         # Phase 0: Tail wags
         if elapsed < 0.5:
-            # this should take 0.5 second
-            if self.tail <= 120:
-                self.tail += (
-                    120 - 45
-                ) / 50  # 50 time frames in 0.5 seconds under 100Hz
-
+            # move fast to one side
+            if self.tail <= 150:
+                self.tail += 8
 
         # Phase 1: Look at tail
         elif elapsed < 1: # look for 1 - 0.5 = 0.5 seconds
@@ -187,18 +184,18 @@ class RobotBehaviors:
             self.right_eye.set_state(self.right_eye.eye_with_position((3, 2)))
 
         # Phase 2: Spin and counter-tail movement
-        elif elapsed < 2: # chases its tail for about 4 - 1 = 3 seconds
+        elif elapsed < 2: # starts chasing its tail
                 self.left_speed = 60
                 self.right_speed = -60
 
-        elif elapsed < 4:
+        elif elapsed < 6:
                 self.left_speed = 60
                 self.right_speed = -60
-                # tail starts to move in opposite direction after 1 second, stops when angle=75
-                self.tail = max(75, self.tail - 2)
+                # tail starts to move in opposite direction, stops when angle=60
+                self.tail = max(60, self.tail - 2)
 
         # Phase 3: Dizzy animation
-        elif elapsed < 6:
+        elif elapsed < 9:
             # Change frames every 0.1s
             if elapsed - self._last_frame_time > 0.1:
                 self._last_frame_time += 0.1
