@@ -55,7 +55,7 @@ class RobotBehaviors:
         self.state = self.manager.state
         match self.state:
             case "run_petted":
-                self.behavior = self.petted
+                self.behavior = lambda: self.petted(self.manager.eye_state)
             case "run_look_for_treat":
                 elapsed = self.manager.now - self.manager.look_for_treat_start
                 self.behavior = lambda: self.look_for_treat(elapsed)
@@ -300,15 +300,23 @@ class RobotBehaviors:
             self.left_eye.set_state(self.left_eye.happy)
             self.right_eye.set_state(self.right_eye.happy)
 
-    def petted(self):
+    def petted(self, state):
         """
         Triggered when button on top is pressed
-        Stops any movement, smiling eyes, wag tail, fold ears
+        Stops any movement, smiling/heart/sparkle eyes, wag tail, fold ears
         """
         self.left_speed = 0
         self.right_speed = 0
-        self.left_eye.set_state(self.left_eye.happy)
-        self.right_eye.set_state(self.right_eye.happy)
+        if state == 'happy':
+            self.left_eye.set_state(self.left_eye.happy)
+            self.right_eye.set_state(self.right_eye.happy)
+        elif state == 'heart':
+            self.left_eye.set_state(self.left_eye.heart_left)
+            self.right_eye.set_state(self.right_eye.heart_right)
+        elif state == 'sparkle':
+            self.left_eye.set_state(self.left_eye.sparkle_left)
+            self.right_eye.set_state(self.right_eye.sparkle_right)
+
         self.wag_tail(speed=1)
         self.ear = 0
 

@@ -42,6 +42,7 @@ class StateManager:
         self.default_start = None
         self.idle_start = None
         self.petted_start = None
+        self.eye_state = "happy" # default eye state when petted
         self.look_for_treat_start = None
         self.word_command_start = None
         self.sleep_start = None
@@ -62,7 +63,8 @@ class StateManager:
             self.run_signals["run_petted"] = 1
         else:
             self.run_signals["run_petted"] = 0
-
+            self.eye_state = random.choice(["happy", "heart", "sparkle"])
+            
     def update_melody(self, now):
         self.heard_melody = self.audio_collector.detect_melody()
         if self.heard_melody:
