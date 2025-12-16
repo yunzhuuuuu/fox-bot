@@ -21,13 +21,14 @@ class StateManager:
         self.run_signals = {
             "run_petted": 0, 
             "run_look_for_treat": 0, 
-            "run_spin": 0, 
-            "run_circle": 0, 
-            "run_square": 0
+            # "run_spin": 0, 
+            # "run_circle": 0, 
+            # "run_square": 0,
+            "run_sleep": 0
             }
         
-        self.idles = ["sleep", "chase_tail", "wag_tail", "blink"]
-        self.idle_duration = {"sleep": 5, "chase_tail": 10, "wag_tail": 3, "blink": 6}
+        self.idles = ["chase_tail", "wag_tail", "blink", "look_around"]
+        self.idle_duration = {"chase_tail": 10, "wag_tail": 3, "blink": 6, "look_around": 12}
         # active behavior durations are in their run signal logics
 
         self.run_signal = 0
@@ -35,6 +36,7 @@ class StateManager:
 
         self.button_pressed = False
         self.heard_melody = False
+        self.dark = False
         self.command = None
         self.now = None
         self.default_start = None
@@ -42,6 +44,7 @@ class StateManager:
         self.petted_start = None
         self.look_for_treat_start = None
         self.word_command_start = None
+        self.sleep_start = None
         self.chase_tail_phase = 0
 
     def update_petted(self, now):
@@ -91,6 +94,20 @@ class StateManager:
             self.run_signals["run_circle"] = 0
             self.run_signals["run_square"] = 0
             self.command = None
+
+    def update_sleep(self, now):
+        self.dark = self.berry_detection.get_darkness()
+        # 1 if dark environment, 0 if not
+        if self.dark:
+            self.sleep_start = now
+
+        if (
+            self.sleep_start is not None
+            and now - self.sleep_start <= 2
+        ):  # 2 second wake up delay
+            self.run_signals["run_sleep"] = 1
+        else:
+            self.run_signals["run_sleep"] = 0        
 
     def update_signal(self, now):
         self.update_petted(now)

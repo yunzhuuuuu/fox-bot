@@ -65,16 +65,19 @@ class RobotBehaviors:
                 self.behavior = self.circle
             case "run_square":
                 self.behavior = self.square
+            case "run_sleep":
+                self.behavior = self.sleep
             case "blink":
                 elapsed = self.manager.now - self.manager.idle_start
                 self.behavior = lambda: self.blink(elapsed)
-            case "sleep":
-                self.behavior = self.sleep
             case "chase_tail":
                 elapsed = self.manager.now - self.manager.idle_start
                 self.behavior = lambda: self.chase_tail(elapsed)
             case "wag_tail":
                 self.behavior = self.wag_tail
+            case "look_around":
+                elapsed = self.manager.now - self.manager.idle_start
+                self.behavior = lambda: self.look_around(elapsed)
             case _:
                 self.behavior = self.default
 
@@ -265,16 +268,37 @@ class RobotBehaviors:
 
         if math.floor(elapsed) % 2 == 0:  # even number of seconds elapsed
             self.left_speed = 60
-            self.right_speed = -50
+            self.right_speed = 50
         else:
             self.left_speed = 50
-            self.right_speed = -60
+            self.right_speed = 60
 
-    def wander(self):
+    def look_around(self, elapsed):
         """
-        Wiggle and move in a certain pattern tbd
+        Look left and look right, then turn back, and wiggle forward a bit
         """
-        pass
+        if elapsed < 2:
+            self.left_speed = -50
+            self.right_speed = 50
+            self.left_eye.set_state(self.left_eye.eye_with_position((0, 2)))
+            self.right_eye.set_state(self.right_eye.eye_with_position((0, 2)))
+
+        elif elapsed < 5:
+            self.left_speed = 50
+            self.right_speed = -50
+            self.left_eye.set_state(self.left_eye.eye_with_position((3, 2)))
+            self.right_eye.set_state(self.right_eye.eye_with_position((3, 2)))
+
+        elif elapsed < 6:
+            self.left_speed = -50
+            self.right_speed = 50
+
+        elif elapsed < 9:
+            self.wiggle(elapsed)
+
+        elif elapsed < 11:
+            self.left_eye.set_state(self.left_eye.happy)
+            self.right_eye.set_state(self.right_eye.happy)
 
     def petted(self):
         """

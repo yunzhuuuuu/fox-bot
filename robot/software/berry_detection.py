@@ -21,7 +21,7 @@ class BerryDetection:
         hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         _, _, v = cv.split(hsv_frame)
         print("brightness:", np.mean(v))
-        return np.mean(v) > 100
+        return np.mean(v) < 100
 
     def get_berry_position(self):
         """
