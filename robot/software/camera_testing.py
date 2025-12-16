@@ -30,8 +30,8 @@ while True:
 
     # use hue values 0-10 *and* 170-180 to account for wrapping, because
     # that's where red is in hsv space
-    binary_image_1 = cv.inRange(hsv_frame, (0, 60, 100), (10, 255, 255))
-    binary_image_2 = cv.inRange(hsv_frame, (170, 60, 100), (180, 255, 255))
+    binary_image_1 = cv.inRange(hsv_frame, (0, 60, 60), (10, 255, 130))
+    binary_image_2 = cv.inRange(hsv_frame, (170, 60, 60), (180, 255, 130))
     binary_image = binary_image_1 + binary_image_2
 
     moments = cv.moments(binary_image)
@@ -41,9 +41,7 @@ while True:
             moments["m10"] / moments["m00"],
             moments["m01"] / moments["m00"],
         )
-        # normalize self.center_x
-        norm_x_pose = (center_x - frame.shape[1] / 2) / frame.shape[1]
-        norm_y_pose = (center_y - frame.shape[0] / 2) / frame.shape[0]
+
         # print(center_x, ", ", center_y)
         frame = cv.circle(frame, (floor(center_x), floor(center_y)), 5, [0, 255, 0], -1)
 
