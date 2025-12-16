@@ -9,7 +9,7 @@ const int CS_PIN = 8; // Load/Chip Select (CS) -> Connect to CS on the first dis
 const int ENCODER_PIN_R = 2; // Encoder for right motor (must be 2 or 3 for ISR)
 const int ENCODER_PIN_L = 3; // Encoder for left motor (must be 2 or 3 for ISR)
 const int SERVO_EAR_R = 10; // Right ear servo
-const int SERVO_EAR_L = 9; // Left ear servo
+const int SERVO_EAR_L = 11; // Left ear servo
 const int SERVO_TAIL = 6; // Tail servo
 
 const int NUM_DEVICES = 2; // Number of displays daisy-chained together
