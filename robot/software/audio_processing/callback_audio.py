@@ -4,6 +4,7 @@ import os
 import pyaudio
 import robot.software.audio_processing.pitch_finder as pf
 import numpy as np
+import sounddevice
 
 
 class CollectAudio:
@@ -57,6 +58,8 @@ class CollectAudio:
         """
         if time.time() - self.last_sample >= save_interval:
 
+            is_melody = False
+
             media_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media")
             audio_path = os.path.join(media_dir, "output.wav")
             with wave.open(audio_path, "wb") as wf:
@@ -68,21 +71,25 @@ class CollectAudio:
             y, sr = pf.load_audio("output.wav")
             f0 = pf.estimate_pitch(y, sr)
             if len(f0) != 0:
-                notes = pf.pitch_to_note(f0)
-                # remove duplicate if last note of existing list and first note of new list are the same
-                try:
-                    if self.saved_notes[-1] == notes[0]:
-                        notes = notes[1:]
-                finally:
-                    self.saved_notes.extend(notes)
+                notes = pf.pitch_to_note(f0, min_instances=3)
+                # remove duplicate if last note of saved and 1st note of new list are the same
+                if (
+                    len(self.saved_notes) != 0
+                    and len(notes) != 0
+                    and self.saved_notes[-1] == notes[0]
+                ):
+                    notes = notes[1:]
+
+                self.saved_notes.extend(notes)
                 print(str(self.saved_notes).encode("utf-8"))
+                # print(str(notes).encode("utf-8"))
 
                 is_melody = pf.check_melody(self.saved_notes, CollectAudio.MELODY)
+                print(is_melody)
                 if is_melody:
                     self.saved_notes = []
-                return is_melody
 
             self.last_sample = time.time()
             self.frames = []
 
-            return False
+            return is_melody

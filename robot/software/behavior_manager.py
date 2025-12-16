@@ -5,17 +5,18 @@ from robot.software.berry_detection import BerryDetection
 from robot.software.audio_processing.word_detection import WordDetection
 from robot.software.audio_processing.callback_audio import CollectAudio
 
+
 class StateManager:
 
     def __init__(self, button_pressed):
         self.berry_detection = BerryDetection()
-        self.word_detector = WordDetection()
+        # self.word_detector = WordDetection()
         self.audio_collector = CollectAudio()
 
         self.button_pressed = button_pressed
-        
+
         # if run_signal is 1, the robot should be doing this behavior, if 0, it should not
-        # ideally only one of them should be 1, but if there's more than 1 active signals, 
+        # ideally only one of them should be 1, but if there's more than 1 active signals,
         # the signals closer to the beginning of the dict has higher priority to happen
         # higher priority behavior interrupts lower priority ones
         self.run_signals = {
@@ -47,7 +48,9 @@ class StateManager:
         if self.button_pressed:
             self.petted_start = time.time()
 
-        if self.petted_start is not None and now - self.petted_start <= 5: # reaction lasts for 5 sec
+        if (
+            self.petted_start is not None and now - self.petted_start <= 5
+        ):  # reaction lasts for 5 sec
             self.run_signals["run_petted"] = 1
         else:
             self.run_signals["run_petted"] = 0
@@ -57,7 +60,10 @@ class StateManager:
         if self.heard_melody:
             self.look_for_treat_start = time.time()
 
-        if self.look_for_treat_start is not None and now - self.look_for_treat_start <= 25: # look for treat for at most 20 sec
+        if (
+            self.look_for_treat_start is not None
+            and now - self.look_for_treat_start <= 25
+        ):  # look for treat for at most 20 sec
             self.run_signals["run_look_for_treat"] = 1
         else:
             self.run_signals["run_look_for_treat"] = 0
@@ -91,7 +97,7 @@ class StateManager:
             if signal == 1:
                 self.run_signal = 1
                 self.state = state
-                break # once find an active signal, stop enumerating
+                break  # once find an active signal, stop enumerating
 
     def update_state(self):
         self.now = time.time()
@@ -121,4 +127,3 @@ class StateManager:
             else:
                 self.state = "default"
                 self.default_start = self.now
-
