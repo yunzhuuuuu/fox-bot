@@ -66,8 +66,8 @@ class RobotBehaviors:
             case "run_square":
                 self.behavior = self.square
             case "blink":
-                elapsed = self.manager.now - self.manager.look_for_treat_start
-                self.behavior = lambda: self.look_for_treat(elapsed)
+                elapsed = self.manager.now - self.manager.idle_start
+                self.behavior = lambda: self.blink(elapsed)
             case "sleep":
                 self.behavior = self.sleep
             case "chase_tail":
@@ -112,8 +112,19 @@ class RobotBehaviors:
         """
         self.left_speed = max(0, self.left_speed - 2)
         self.right_speed = max(0, self.right_speed - 2)
-        self.ear = 90
-        self.tail = 120
+
+        if self.ear < 90:
+            self.ear = min(self.ear + 2, 90)
+        elif self.ear > 90:
+            self.ear = max(self.ear - 2, 90)
+        self.ear = max(0, min(180, self.ear))
+
+        if self.tail < 120:
+            self.tail = min(self.tail + 2, 120)
+        elif self.tail > 120:
+            self.tail = max(self.tail - 2, 120)
+        self.tail = max(0, min(180, self.tail))
+
         self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
@@ -152,7 +163,7 @@ class RobotBehaviors:
         # Time within the blink cycle
         t = elapsed % 2  # 2 seconds between blinks
 
-        if t < 0.3:  # seconds eyes stay closed
+        if t < 0.5:  # seconds eyes stay closed
             # Eyes closed
             self.left_eye.set_state(self.left_eye.blink)
             self.right_eye.set_state(self.right_eye.blink)
