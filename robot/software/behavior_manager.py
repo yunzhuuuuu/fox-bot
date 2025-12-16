@@ -10,7 +10,7 @@ class StateManager:
 
     def __init__(self, button_pressed):
         self.berry_detection = BerryDetection()
-        self.word_detector = WordDetection()
+        # self.word_detector = WordDetection()
         self.audio_collector = CollectAudio()
 
         self.button_pressed = button_pressed
