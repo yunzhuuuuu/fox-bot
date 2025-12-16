@@ -150,6 +150,7 @@ void setup() {
   lc.shutdown(1, false); // Wake up the display 2
   lc.setIntensity(1, 1); // Set the brightness from 0-15 
   lc.clearDisplay(1); // Clear display 2
+  pinMode(9, INPUT_PULLUP); 
 }
 
 void loop() {
@@ -197,5 +198,13 @@ void loop() {
       }
 
     }
+
+    int buttonState = digitalRead(9);
+    // Check if the button is pressed (LOW because of the pull-up resistor on the pin)
+    if (buttonState == LOW) {
+      Serial.print(1);
+    } else {
+      Serial.print(0);
+    }s
   }
 }
