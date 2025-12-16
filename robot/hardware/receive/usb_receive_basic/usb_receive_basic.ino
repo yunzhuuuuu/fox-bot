@@ -116,8 +116,9 @@ void setMotors(int speedL, int speedR) {
 }
 
 void setEars(byte ear_angle) { // Set ears angle
-  earR_servo.write(ear_angle);
-  earL_servo.write(ear_angle);
+  int ear_delta = ear_angle - 90;
+  earR_servo.write(90 + ear_delta);
+  earL_servo.write(90 - ear_delta);
 }
 
 void setTail(byte tail_angle) { // Set tail angle
