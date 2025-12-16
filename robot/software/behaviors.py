@@ -19,6 +19,7 @@ import robot.software.eye_display as eye_display
 from robot.software.berry_detection import BerryDetection
 from robot.software.behavior_manager import StateManager
 
+
 class RobotBehaviors:
 
     def __init__(self, manager):
@@ -56,7 +57,8 @@ class RobotBehaviors:
             case "run_petted":
                 self.behavior = self.petted
             case "run_look_for_treat":
-                self.behavior = self.look_for_treat
+                elapsed = self.manager.now - self.manager.look_for_treat_start
+                self.behavior = lambda: self.look_for_treat(elapsed)
             case "run_spin":
                 self.behavior = self.spin
             case "run_circle":
@@ -95,9 +97,9 @@ class RobotBehaviors:
             int(self.tail),
             self.eye_brightness,
             *self.left_eye.current_state,
-            *self.right_eye.current_state
+            *self.right_eye.current_state,
         )
-    
+
     def default(self):
         """
         Passive idle, called when not running a special behavior.
@@ -132,7 +134,7 @@ class RobotBehaviors:
         self.left_eye.set_state(self.left_eye.angry_left)
         self.right_eye.set_state(self.right_eye.angry_right)
 
-        self.ear += 4 * self._ear_direction   
+        self.ear += 4 * self._ear_direction
         if self.ear >= 90 + offset:
             self.ear = 90 + offset
             self._wag_direction = -1
@@ -179,35 +181,33 @@ class RobotBehaviors:
                 self.tail += 8
 
         # Phase 1: Look at tail
-        elif elapsed < 1: # look for 1 - 0.5 = 0.5 seconds
+        elif elapsed < 1:  # look for 1 - 0.5 = 0.5 seconds
             self.left_eye.set_state(self.left_eye.eye_with_position((3, 2)))
             self.right_eye.set_state(self.right_eye.eye_with_position((3, 2)))
 
         # Phase 2: Spin and counter-tail movement
-        elif elapsed < 2: # starts chasing its tail
-                self.left_speed = 60
-                self.right_speed = -60
+        elif elapsed < 2:  # starts chasing its tail
+            self.left_speed = 60
+            self.right_speed = -60
 
         elif elapsed < 6:
-                self.left_speed = 60
-                self.right_speed = -60
-                # tail starts to move in opposite direction, stops when angle=60
-                self.tail = max(60, self.tail - 2)
+            self.left_speed = 60
+            self.right_speed = -60
+            # tail starts to move in opposite direction, stops when angle=60
+            self.tail = max(60, self.tail - 2)
 
         # Phase 3: Dizzy animation
         elif elapsed < 9:
             # Change frames every 0.1s
             if elapsed - self._last_frame_time > 0.1:
                 self._last_frame_time += 0.1
-                self._frame_index = (self._frame_index + 1) % len(self._left_rotate_frames)
+                self._frame_index = (self._frame_index + 1) % len(
+                    self._left_rotate_frames
+                )
                 print(self._frame_index)
                 print(self._last_frame_time)
-            self.left_eye.current_state = self._left_rotate_frames[
-                self._frame_index
-            ]
-            self.right_eye.current_state = self._right_rotate_frames[
-                self._frame_index
-            ]
+            self.left_eye.current_state = self._left_rotate_frames[self._frame_index]
+            self.right_eye.current_state = self._right_rotate_frames[self._frame_index]
             # print(self.left_eye.current_state)
 
         # Phase 4: End behavior
@@ -240,7 +240,7 @@ class RobotBehaviors:
         Wiggle and move in a certain pattern tbd
         """
         pass
-    
+
     def petted(self):
         """
         Triggered when button on top is pressed
@@ -267,7 +267,7 @@ class RobotBehaviors:
         if elapsed > 20:
             self.mad()
             return
-        
+
         self.left_eye.set_state(self.left_eye.heart_left)
         self.right_eye.set_state(self.right_eye.heart_right)
         self.wag_tail()
@@ -276,7 +276,7 @@ class RobotBehaviors:
             self.left_speed = -50
             self.right_speed = 50
 
-        else:            
+        else:
             x_position = berry_position[0]
             if x_position > RIGHT_THRESHOLD:  # berry is to the right
                 self.left_speed = 50
@@ -288,7 +288,6 @@ class RobotBehaviors:
                 self.left_speed = -50
                 self.right_speed = 50
 
-
     def spin(self):
         self.left_speed = -50
         self.right_speed = 50
@@ -298,6 +297,7 @@ class RobotBehaviors:
 
     def square(self):
         pass
+
 
 # if __name__ == "__main__":
 #     button_pressed = 0
