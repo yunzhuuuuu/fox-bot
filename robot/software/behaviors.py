@@ -64,7 +64,8 @@ class RobotBehaviors:
             case "run_square":
                 self.behavior = self.square
             case "blink":
-                self.behavior = self.blink
+                elapsed = self.manager.now - self.manager.look_for_treat_start
+                self.behavior = lambda: self.look_for_treat(elapsed)
             case "sleep":
                 self.behavior = self.sleep
             case "chase_tail":
@@ -189,7 +190,6 @@ class RobotBehaviors:
 
         need to test on robot and adjust all angles and time
         """
-        print(elapsed)
         # record the time it starts
         if not hasattr(self, "_frame_index"):
             self.tail = 45
