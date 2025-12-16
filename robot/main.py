@@ -28,8 +28,7 @@ if __name__ == "__main__":
     time.sleep(1)  # wait for Arduino reset after serial connection
     print("Waking up...")
     button_pressed = 0
-    heard_melody = 0
-    state_manager = StateManager(button_pressed, heard_melody)
+    state_manager = StateManager(button_pressed)
     fox = RobotBehaviors(state_manager)
 
     while True:

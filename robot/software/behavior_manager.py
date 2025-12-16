@@ -3,16 +3,17 @@ import random
 
 from robot.software.berry_detection import BerryDetection
 from robot.software.audio_processing.word_detection import WordDetection
+from robot.software.audio_processing.callback_audio import CollectAudio
 
 class StateManager:
 
-    def __init__(self, button_pressed, heard_melody):
+    def __init__(self, button_pressed):
         self.berry_detection = BerryDetection()
         self.word_detector = WordDetection()
+        self.audio_collector = CollectAudio()
 
         self.button_pressed = button_pressed
-        self.heard_melody = heard_melody
-
+        
         # if run_signal is 1, the robot should be doing this behavior, if 0, it should not
         # ideally only one of them should be 1, but if there's more than 1 active signals, 
         # the signals closer to the beginning of the dict has higher priority to happen
@@ -32,6 +33,7 @@ class StateManager:
         self.run_signal = 0
         self.state = "default"
 
+        self.heard_melody = False
         self.command = None
         self.now = None
         self.default_start = None
@@ -51,6 +53,7 @@ class StateManager:
             self.run_signals["run_petted"] = 0
 
     def update_melody(self, now):
+        self.heard_melody = self.audio_collector.detect_melody()
         if self.heard_melody:
             self.look_for_treat_start = time.time()
 
@@ -60,7 +63,9 @@ class StateManager:
             self.run_signals["run_look_for_treat"] = 0
 
     def update_word_command(self, now):
-        new_command = self.word_detector.read_cmd()
+        # new_command = self.word_detector.read_cmd()
+        new_command = None
+
         if new_command is not None:
             self.command = new_command
             self.word_command_start = now
