@@ -2,6 +2,8 @@ import os
 import librosa
 import numpy as np
 
+notes_in_melody = {"A4", "A♯4", "G4", "D4", "F4", "C5"}
+
 
 def load_audio(filename: str):
     """Return waveform (y) and sampling rate (sr) from a file in the current directory."""
@@ -34,6 +36,8 @@ def pitch_to_note(f0, min_instances=5):
     count = 1
 
     for i in range(1, len(notes)):
+        if notes[i] not in notes_in_melody:
+            continue
         if notes[i] == notes[i - 1]:
             count += 1
         else:
@@ -76,7 +80,7 @@ def run_pitch_finder(audio_path, min_instances=5):
     Returns:
         Boolean: True if certain melody is found, otherwise false
     """
-    melody = np.array(["A3", "A♯3", "G3", "A3", "D3", "A3", "F3", "C4"])
+
     y, sr = load_audio(audio_path)
     f0 = estimate_pitch(y, sr)
     # print(f0)
