@@ -2,38 +2,38 @@ import time
 import random
 
 from robot.software.berry_detection import BerryDetection
-from robot.software.audio_processing.word_detection import WordDetection
+# from robot.software.audio_processing.word_detection import WordDetection
 from robot.software.audio_processing.callback_audio import CollectAudio
 
 
 class StateManager:
 
-    def __init__(self, button_pressed):
+    def __init__(self, arduino):
         self.berry_detection = BerryDetection()
         # self.word_detector = WordDetection()
         self.audio_collector = CollectAudio()
-
-        self.button_pressed = button_pressed
+        self.arduino = arduino
 
         # if run_signal is 1, the robot should be doing this behavior, if 0, it should not
         # ideally only one of them should be 1, but if there's more than 1 active signals,
         # the signals closer to the beginning of the dict has higher priority to happen
         # higher priority behavior interrupts lower priority ones
         self.run_signals = {
-            "run_petted": 0,
-            "run_look_for_treat": 0,
-            "run_spin": 0,
-            "run_circle": 0,
-            "run_square": 0,
-        }
-
-        self.idles = ["sleep", "chase_tail", "wag_tail"]
-        self.idle_duration = {"sleep": 5, "chase_tail": 10, "wag_tail": 3}
+            "run_petted": 0, 
+            "run_look_for_treat": 0, 
+            "run_spin": 0, 
+            "run_circle": 0, 
+            "run_square": 0
+            }
+        
+        self.idles = ["sleep", "chase_tail", "wag_tail", "blink"]
+        self.idle_duration = {"sleep": 5, "chase_tail": 10, "wag_tail": 3, "blink": 6}
         # active behavior durations are in their run signal logics
 
         self.run_signal = 0
         self.state = "default"
 
+        self.button_pressed = False
         self.heard_melody = False
         self.command = None
         self.now = None
@@ -45,6 +45,11 @@ class StateManager:
         self.chase_tail_phase = 0
 
     def update_petted(self, now):
+        line = self.arduino.read(1)  # Read 1 byte
+        if line:
+            # Decode byte to string and strip whitespace
+            self.button_pressed = line.decode('utf-8').strip()
+
         if self.button_pressed:
             self.petted_start = time.time()
 
