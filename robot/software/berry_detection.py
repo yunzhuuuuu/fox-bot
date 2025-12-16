@@ -2,15 +2,15 @@ from math import floor
 import numpy as np
 import cv2 as cv
 
+cap = cv.VideoCapture(0)
+if not cap.isOpened():
+    print("Cannot open camera")
+    raise Exception("you suck")
+else:
+    print("opened camera")
+
 
 class BerryDetection:
-    def __init__(self):
-        self.cap = cv.VideoCapture(0)
-        if not self.cap.isOpened():
-            print("Cannot open camera")
-
-    def __del__(self):
-        self.cap.release()
 
     def get_berry_position(self):
         """
@@ -19,8 +19,8 @@ class BerryDetection:
         Returns:
             (int, int) or None: (x,y) position of object, or None if no object is detected
         """
+        ret, frame = cap.read()
 
-        ret, frame = self.cap.read()
         # if frame is read correctly ret is True
         if not ret:
             return None
@@ -29,8 +29,8 @@ class BerryDetection:
 
         # use hue values 0-10 *and* 170-180 to account for wrapping, because
         # that's where red is in hsv space
-        binary_image_1 = cv.inRange(hsv_frame, (0, 60, 100), (10, 255, 255))
-        binary_image_2 = cv.inRange(hsv_frame, (170, 60, 100), (180, 255, 255))
+        binary_image_1 = cv.inRange(hsv_frame, (0, 60, 60), (10, 255, 130))
+        binary_image_2 = cv.inRange(hsv_frame, (170, 60, 60), (180, 255, 130))
         binary_image = binary_image_1 + binary_image_2
 
         moments = cv.moments(binary_image)

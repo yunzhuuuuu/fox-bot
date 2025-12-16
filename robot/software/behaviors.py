@@ -259,10 +259,11 @@ class RobotBehaviors:
         Spins and look around for treat, comes to the treat
         When sees treat, make heart eyes, wag tail, comes to the treat
         """
-        LEFT_THRESHOLD = 1400
-        RIGHT_THRESHOLD = 1800  # TODO: fix these values
+        LEFT_THRESHOLD = 200
+        RIGHT_THRESHOLD = 300  # TODO: fix these values
 
         berry_position = self.berry_detection.get_berry_position()
+        # print(berry_position)
 
         if elapsed > 20:
             self.mad()
@@ -279,14 +280,14 @@ class RobotBehaviors:
         else:
             x_position = berry_position[0]
             if x_position > RIGHT_THRESHOLD:  # berry is to the right
-                self.left_speed = 50
-                self.right_speed = -50
+                self.left_speed = 30
+                self.right_speed = -30
             elif x_position > LEFT_THRESHOLD:  # berry is in the middle
                 self.left_speed = 50
                 self.right_speed = 50
             else:  # berry is to the left
-                self.left_speed = -50
-                self.right_speed = 50
+                self.left_speed = -30
+                self.right_speed = 30
 
     def spin(self):
         self.left_speed = -50
