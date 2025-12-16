@@ -63,6 +63,8 @@ class RobotBehaviors:
                 self.behavior = self.circle
             case "run_square":
                 self.behavior = self.square
+            case "blink":
+                self.behavior = self.blink
             case "sleep":
                 self.behavior = self.sleep
             case "chase_tail":
@@ -140,6 +142,28 @@ class RobotBehaviors:
             self.ear = 90 - offset
             self._wag_direction = 1
 
+    def blink(self, elapsed):
+        """
+        Blink eyes, move ears
+        """
+        # Time within the blink cycle
+        t = elapsed % 2  # 2 seconds between blinks
+
+        if t < 0.3:  # seconds eyes stay closed
+            # Eyes closed
+            self.left_eye.set_state(self.left_eye.blink)
+            self.right_eye.set_state(self.right_eye.blink)
+        else:
+            # Eyes open
+            self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
+            self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
+
+        if elapsed < 2:
+            self.ear = max(0, self.ear - 1)
+
+        elif elapsed < 5:
+            self.ear = min(180, self.ear + 1)
+            
     def sleep(self):
         """
         Sleep behavior:
