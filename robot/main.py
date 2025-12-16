@@ -16,6 +16,8 @@ def print_robot_state(fox, state_manager):
     print(f"Left eye array:   {fox.left_eye.current_state}")
     print(f"Right eye array:  {fox.right_eye.current_state}")
     print(f"State:            {fox.state}")
+    print(f"Button state:     {state_manager.button_pressed}")
+    print(f"Melody:           {state_manager.heard_melody}")
     print(f"Word command:     {state_manager.command}")
     print("Raw bytes:", packet)
     print("=============================================")
@@ -24,7 +26,7 @@ def print_robot_state(fox, state_manager):
 if __name__ == "__main__":
     print("Started run...")
     port = "/dev/ttyACM0"
-    arduino = serial.Serial(port, 115200)
+    arduino = serial.Serial(port, 115200, timeout=0.1)
     time.sleep(1)  # wait for Arduino reset after serial connection
     print("Waking up...")
     state_manager = StateManager(arduino)

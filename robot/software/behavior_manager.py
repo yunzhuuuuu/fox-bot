@@ -47,15 +47,15 @@ class StateManager:
     def update_petted(self, now):
         line = self.arduino.read(1)  # Read 1 byte
         if line:
-            # Decode byte to string and strip whitespace
-            self.button_pressed = line.decode('utf-8').strip()
-
-        if self.button_pressed:
-            self.petted_start = time.time()
+           # Decode byte to string and strip whitespace
+            self.button_pressed = line.decode()
+            
+        if self.button_pressed == "1":
+            self.petted_start = now
 
         if (
-            self.petted_start is not None and now - self.petted_start <= 5
-        ):  # reaction lasts for 5 sec
+            self.petted_start is not None and now - self.petted_start <= 3
+        ):  # reaction lasts for 3 sec
             self.run_signals["run_petted"] = 1
         else:
             self.run_signals["run_petted"] = 0
@@ -63,7 +63,7 @@ class StateManager:
     def update_melody(self, now):
         self.heard_melody = self.audio_collector.detect_melody()
         if self.heard_melody:
-            self.look_for_treat_start = time.time()
+            self.look_for_treat_start = now
 
         if (
             self.look_for_treat_start is not None
