@@ -180,7 +180,7 @@ class RobotBehaviors:
 
         elif elapsed < 5:
             self.ear = min(180, self.ear + 1)
-            
+
     def sleep(self):
         """
         Sleep behavior:
@@ -307,13 +307,13 @@ class RobotBehaviors:
         """
         self.left_speed = 0
         self.right_speed = 0
-        if state == 'happy':
+        if state == "happy":
             self.left_eye.set_state(self.left_eye.happy)
             self.right_eye.set_state(self.right_eye.happy)
-        elif state == 'heart':
+        elif state == "heart":
             self.left_eye.set_state(self.left_eye.heart_left)
             self.right_eye.set_state(self.right_eye.heart_right)
-        elif state == 'sparkle':
+        elif state == "sparkle":
             self.left_eye.set_state(self.left_eye.sparkle_left)
             self.right_eye.set_state(self.right_eye.sparkle_right)
 
@@ -327,7 +327,7 @@ class RobotBehaviors:
         When sees treat, make heart eyes, wag tail, comes to the treat
         """
         LEFT_THRESHOLD = 200
-        RIGHT_THRESHOLD = 300  # TODO: fix these values
+        RIGHT_THRESHOLD = 280
 
         berry_position = self.berry_detection.get_berry_position()
         # print(berry_position)

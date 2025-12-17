@@ -31,11 +31,11 @@ class BerryDetection:
             (int, int) or None: (x,y) position of object, or None if no object is detected
         """
         ret, frame = cap.read()
-
         # if frame is read correctly ret is True
         if not ret:
             return None
 
+        frame = cv.rotate(frame, cv.ROTATE_90_COUNTERCLOCKWISE)
         hsv_frame = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
 
         # use hue values 0-10 *and* 170-180 to account for wrapping, because
