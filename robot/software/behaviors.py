@@ -27,7 +27,7 @@ class Parameters(IntEnum):
     EAR_HIGH = 180
     EAR_DEFAULT = 140
     SPEED_LOW = 30
-    SPEED_HIGH = 50
+    SPEED_HIGH = 45
 
 class RobotBehaviors:
 
@@ -347,6 +347,8 @@ class RobotBehaviors:
 
         if elapsed > 20:
             self.mad()
+            self.left_speed = 0
+            self.right_speed = 0
             return
 
         self.left_eye.set_state(self.left_eye.heart_left)
