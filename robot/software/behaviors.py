@@ -26,7 +26,8 @@ class Parameters(IntEnum):
     EAR_LOW = 90
     EAR_HIGH = 180
     EAR_DEFAULT = 140
-
+    SPEED_LOW = 30
+    SPEED_HIGH = 50
 
 class RobotBehaviors:
 
@@ -118,8 +119,14 @@ class RobotBehaviors:
         Slowly reduces movement until static, ears face forward, neutral tail,
         and sets eyes to a centered gaze.
         """
-        self.left_speed = max(0, self.left_speed - 2)
-        self.right_speed = max(0, self.right_speed - 2)
+        if self.left_speed < 0:
+            self.left_speed = min(0, self.left_speed + 2)
+        elif self.right_speed < 0:
+            self.right_speed = min(0, self.right_speed + 2)
+        elif self.left_speed > 0:
+            self.left_speed = max(0, self.left_speed - 2)
+        elif self.right_speed > 0:
+            self.right_speed = max(0, self.right_speed - 2)
 
         if self.ear < Parameters.EAR_DEFAULT:
             self.ear = min(self.ear + 2, Parameters.EAR_DEFAULT)
@@ -137,7 +144,7 @@ class RobotBehaviors:
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
     def wag_tail(self, offset=45, speed=6):
-        # change tail speed by '2' in given direction
+        # change tail speed by 'speed' in given direction
         self.tail += speed * self._wag_direction
 
         # Reverse at bounds
@@ -230,17 +237,19 @@ class RobotBehaviors:
 
         # Phase 2: Spin and counter-tail movement
         elif elapsed < 2:  # starts chasing its tail
-            self.left_speed = 60
-            self.right_speed = -60
+            self.left_speed = -Parameters.SPEED_HIGH
+            self.right_speed = Parameters.SPEED_HIGH
 
         elif elapsed < 6:
-            self.left_speed = 60
-            self.right_speed = -60
+            self.left_speed = Parameters.SPEED_HIGH
+            self.right_speed = -Parameters.SPEED_HIGH
             # tail starts to move in opposite direction, stops when angle=60
             self.tail = max(30, self.tail - 2)
 
         # Phase 3: Dizzy animation
         elif elapsed < 9:
+            self.left_speed = 0
+            self.right_speed = 0          
             # Change frames every 0.1s
             if elapsed - self._last_frame_time > 0.1:
                 self._last_frame_time += 0.1
@@ -280,38 +289,38 @@ class RobotBehaviors:
         """
 
         if math.floor(elapsed) % 2 == 0:  # even number of seconds elapsed
-            self.left_speed = 60
-            self.right_speed = 50
+            self.left_speed = Parameters.SPEED_HIGH
+            self.right_speed = Parameters.SPEED_LOW
         else:
-            self.left_speed = 50
-            self.right_speed = 60
+            self.left_speed = Parameters.SPEED_LOW
+            self.right_speed = Parameters.SPEED_HIGH
 
     def look_around(self, elapsed):
         """
         Look left and look right, then turn back, and wiggle forward a bit
         """
-        if elapsed < 2:
-            self.left_speed = -50
-            self.right_speed = 50
+        if elapsed < 1.5:
+            self.left_speed = -Parameters.SPEED_LOW
+            self.right_speed = Parameters.SPEED_LOW
             self.left_eye.set_state(self.left_eye.eye_with_position((0, 2)))
             self.right_eye.set_state(self.right_eye.eye_with_position((0, 2)))
 
-        elif elapsed < 5:
-            self.left_speed = 50
-            self.right_speed = -50
+        elif elapsed < 4:
+            self.left_speed = Parameters.SPEED_LOW
+            self.right_speed = -Parameters.SPEED_LOW
             self.left_eye.set_state(self.left_eye.eye_with_position((3, 2)))
             self.right_eye.set_state(self.right_eye.eye_with_position((3, 2)))
 
-        elif elapsed < 6:
-            self.left_speed = -50
-            self.right_speed = 50
+        elif elapsed < 5:
+            self.left_speed = -Parameters.SPEED_LOW
+            self.right_speed = Parameters.SPEED_LOW
 
-        elif elapsed < 9:
+        elif elapsed < 7:
             self.wiggle(elapsed)
 
-        elif elapsed < 11:
-            self.left_eye.set_state(self.left_eye.happy)
-            self.right_eye.set_state(self.right_eye.happy)
+        elif elapsed < 9:
+            self.left_eye.set_state(self.left_eye.squint_left)
+            self.right_eye.set_state(self.right_eye.squint_right)
 
     def petted(self, state):
         """
@@ -327,7 +336,7 @@ class RobotBehaviors:
             self.left_eye.set_state(self.left_eye.squint_left)
             self.right_eye.set_state(self.right_eye.squint_right)
 
-        self.wag_tail(speed=1)
+        self.wag_tail(speed=2)
         self.ear = Parameters.EAR_LOW
 
     def look_for_treat(self, elapsed):
@@ -351,49 +360,17 @@ class RobotBehaviors:
         self.wag_tail()
 
         if berry_position is None:
-            self.left_speed = -50
-            self.right_speed = 50
+            self.left_speed = -Parameters.SPEED_HIGH
+            self.right_speed = Parameters.SPEED_HIGH
 
         else:
             x_position = berry_position[0]
             if x_position > RIGHT_THRESHOLD:  # berry is to the right
-                self.left_speed = 30
-                self.right_speed = -30
+                self.left_speed = Parameters.SPEED_LOW
+                self.right_speed = -Parameters.SPEED_LOW
             elif x_position > LEFT_THRESHOLD:  # berry is in the middle
-                self.left_speed = 50
-                self.right_speed = 50
+                self.left_speed = Parameters.SPEED_HIGH
+                self.right_speed = Parameters.SPEED_HIGH
             else:  # berry is to the left
-                self.left_speed = -30
-                self.right_speed = 30
-
-    def spin(self):
-        self.left_speed = -50
-        self.right_speed = 50
-
-    def circle(self):
-        pass
-
-    def square(self):
-        pass
-
-
-# if __name__ == "__main__":
-#     button_pressed = 0
-#     seen_treat = 0
-#     heard_melody = 0
-#     fox = RobotBehaviors(button_pressed, seen_treat, heard_melody)
-#     # while True:
-#     #     fox.update()
-#     #     # print(fox.tail)
-#     #     array = fox.build_packet()  # array to arduino
-#     #     print(array)
-#     #     time.sleep(0.01)  # 100Hz
-
-#     # # test
-#     while True:
-#         # fox.update()
-#         fox.chase_tail()
-#         array = fox.build_packet()
-#         print(fox.chase_tail_phase)
-#         print(fox.left_eye.current_state)
-#         print(fox.right_eye.current_state)
+                self.left_speed = -Parameters.SPEED_LOW
+                self.right_speed = Parameters.SPEED_LOW
