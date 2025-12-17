@@ -32,24 +32,32 @@ if __name__ == "__main__":
     state_manager = StateManager(arduino)
     fox = RobotBehaviors(state_manager)
 
-    while True:
-        print("Starting loop...")
-        # recieved data from arduino
-        # data = arduino.readline().decode()
-        # if len(data) > 0:
-        #     print("Received: " + data)
-        # else:
-        #     print("No data...")
+    try:
+        while True:
+            print("Starting loop...")
+            # recieved data from arduino
+            # data = arduino.readline().decode()
+            # if len(data) > 0:
+            #     print("Received: " + data)
+            # else:
+            #     print("No data...")
 
-        state_manager.update_state()
-        fox.update_behavior()
-        fox.behavior()
-        print("foxbot updated...")
+            state_manager.update_state()
+            fox.update_behavior()
+            fox.behavior()
+            print("foxbot updated...")
+
+            packet = fox.build_packet()
+            arduino.write(packet)
+            print("Sent packet...")
+
+            print_robot_state(fox, state_manager)
+            time.sleep(0.02)  # 50 hz
+            print("Sleeping...")
+    except KeyboardInterrupt:
+        print("STOPPING...")
+        fox.left_speed = 0
+        fox.right_speed = 0
 
         packet = fox.build_packet()
         arduino.write(packet)
-        print("Sent packet...")
-
-        print_robot_state(fox, state_manager)
-        time.sleep(0.02)  # 50 hz
-        print("Sleeping...")

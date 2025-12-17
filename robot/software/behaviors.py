@@ -33,8 +33,8 @@ class RobotBehaviors:
     def __init__(self, manager):
 
         # initialize robot components
-        self.left_speed = 0  # 0–255
-        self.right_speed = 0  # 0–255
+        self.left_speed = 0  # -128 - 127
+        self.right_speed = 0  # -128 - 127
         self.ear = Parameters.EAR_DEFAULT  # 0–180
         self.tail = Parameters.TAIL_DEFAULT  # 0–120
         self.eye_brightness = 1  # for formatting
