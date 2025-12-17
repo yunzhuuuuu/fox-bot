@@ -62,6 +62,7 @@ class StateManager:
 
         if self.button_pressed == "1":
             self.petted_start = now
+            self.run_signals["run_look_for_treat"] = 0
 
         if (
             self.petted_start is not None and now - self.petted_start <= 3

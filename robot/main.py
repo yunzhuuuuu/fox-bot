@@ -42,7 +42,7 @@ if __name__ == "__main__":
         #     print("No data...")
 
         state_manager.update_state()
-        fox.update_bahavior()
+        fox.update_behavior()
         fox.behavior()
         print("foxbot updated...")
 

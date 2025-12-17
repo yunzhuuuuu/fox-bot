@@ -56,7 +56,7 @@ class RobotBehaviors:
         self._left_rotate_frames = self.left_eye.eye_rotate(1)  # clockwise
         self._right_rotate_frames = self.right_eye.eye_rotate(0)  # counterclock
 
-    def update_bahavior(self):
+    def update_behavior(self):
         self.state = self.manager.state
         match self.state:
             case "run_petted":
@@ -251,7 +251,15 @@ class RobotBehaviors:
                 print(self._last_frame_time)
             self.left_eye.current_state = self._left_rotate_frames[self._frame_index]
             self.right_eye.current_state = self._right_rotate_frames[self._frame_index]
-            # print(self.left_eye.current_state)
+
+        # Phase 4: Blink twice
+        elif elapsed < 10:
+            if int(str(elapsed)[1]) == 2 or int(str(elapsed)[1]) == 6:
+                self.left_eye.set_state(self.left_eye.blink)
+                self.right_eye.set_state(self.right_eye.blink)
+            else:
+                self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
+                self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
         # Phase 4: End behavior
         else:

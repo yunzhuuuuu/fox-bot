@@ -3,6 +3,7 @@ from robot.software.behaviors import RobotBehaviors
 from robot.software.behavior_manager import StateManager
 from robot.software.audio_processing.callback_audio import CollectAudio
 
+
 def packet_to_hex(packet):
     return " ".join(f"{b:02X}" for b in packet)
 
@@ -28,6 +29,7 @@ def print_robot_state(fox, state_manager):
     # print("=============================================")
     pass
 
+
 def print_packet(packet):
     print("Raw bytes:      ", packet)
     print("Hex:            ", packet_to_hex(packet))
@@ -48,7 +50,7 @@ if __name__ == "__main__":
     while True:
         # heard_melody = audio_collector.detect_melody()
         state_manager.update_state()
-        fox.update_bahavior()
+        fox.update_behavior()
         fox.behavior()
         packet = fox.build_packet()
         print_robot_state(fox, state_manager)
