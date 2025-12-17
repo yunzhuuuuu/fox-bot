@@ -316,19 +316,16 @@ class RobotBehaviors:
     def petted(self, state):
         """
         Triggered when button on top is pressed
-        Stops any movement, smiling/heart/sparkle eyes, wag tail, fold ears
+        Stops any movement, smiling/squint eyes, wag tail, fold ears
         """
         self.left_speed = 0
         self.right_speed = 0
         if state == "happy":
             self.left_eye.set_state(self.left_eye.happy)
             self.right_eye.set_state(self.right_eye.happy)
-        elif state == "heart":
-            self.left_eye.set_state(self.left_eye.heart_left)
-            self.right_eye.set_state(self.right_eye.heart_right)
-        elif state == "sparkle":
-            self.left_eye.set_state(self.left_eye.sparkle_left)
-            self.right_eye.set_state(self.right_eye.sparkle_right)
+        elif state == "squint":
+            self.left_eye.set_state(self.left_eye.squint_left)
+            self.right_eye.set_state(self.right_eye.squint_right)
 
         self.wag_tail(speed=1)
         self.ear = Parameters.EAR_LOW

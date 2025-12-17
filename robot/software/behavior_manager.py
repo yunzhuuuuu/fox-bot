@@ -70,7 +70,7 @@ class StateManager:
             self.run_signals["run_petted"] = 1
         else:
             self.run_signals["run_petted"] = 0
-            self.eye_state = random.choice(["happy", "heart", "sparkle"])
+            self.eye_state = random.choice(["happy", "squint"])
 
     def update_melody(self, now):
         self.heard_melody = self.audio_collector.detect_melody()
