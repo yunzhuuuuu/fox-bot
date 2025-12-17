@@ -96,20 +96,20 @@ void setMotors(int speedL, int speedR) {
   if (speedL==0){
     m1 -> run(RELEASE);
   } else if(speedL<0){
-    m1 -> run(BACKWARD);
+    m1 -> run(FORWARD);
     m1->setSpeed(-speedL);
   } else{
-    m1 -> run(FORWARD);
+    m1 -> run(BACKWARD);
     m1->setSpeed(speedL);
   }
   // Set speed and direction of right motor
   if (speedR==0){
     m2 -> run(RELEASE);
   } else if(speedR<0){
-    m2 -> run(BACKWARD);
+    m2 -> run(FORWARD);
     m2->setSpeed(-speedR);
   } else{
-    m2 -> run(FORWARD);
+    m2 -> run(BACKWARD);
     m2->setSpeed(speedR);
   }
   
@@ -117,8 +117,8 @@ void setMotors(int speedL, int speedR) {
 
 void setEars(byte ear_angle) { // Set ears angle
   int ear_delta = ear_angle - 90;
-  earR_servo.write(90 + ear_delta);
-  earL_servo.write(90 - ear_delta);
+  earR_servo.write(83 + ear_delta);
+  earL_servo.write(80 - ear_delta);
 }
 
 void setTail(byte tail_angle) { // Set tail angle
