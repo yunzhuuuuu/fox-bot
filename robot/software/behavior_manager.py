@@ -2,6 +2,7 @@ import time
 import random
 
 from robot.software.berry_detection import BerryDetection
+
 # from robot.software.audio_processing.word_detection import WordDetection
 from robot.software.audio_processing.callback_audio import CollectAudio
 
@@ -19,16 +20,21 @@ class StateManager:
         # the signals closer to the beginning of the dict has higher priority to happen
         # higher priority behavior interrupts lower priority ones
         self.run_signals = {
-            "run_petted": 0, 
-            "run_look_for_treat": 0, 
-            # "run_spin": 0, 
-            # "run_circle": 0, 
+            "run_petted": 0,
+            "run_look_for_treat": 0,
+            # "run_spin": 0,
+            # "run_circle": 0,
             # "run_square": 0,
-            "run_sleep": 0
-            }
-        
+            "run_sleep": 0,
+        }
+
         self.idles = ["chase_tail", "wag_tail", "blink", "look_around"]
-        self.idle_duration = {"chase_tail": 10, "wag_tail": 3, "blink": 6, "look_around": 12}
+        self.idle_duration = {
+            "chase_tail": 10,
+            "wag_tail": 3,
+            "blink": 6,
+            "look_around": 12,
+        }
         # active behavior durations are in their run signal logics
 
         self.run_signal = 0
@@ -42,7 +48,7 @@ class StateManager:
         self.default_start = None
         self.idle_start = None
         self.petted_start = None
-        self.eye_state = "happy" # default eye state when petted
+        self.eye_state = "happy"  # default eye state when petted
         self.look_for_treat_start = None
         self.word_command_start = None
         self.sleep_start = None
@@ -51,9 +57,9 @@ class StateManager:
     def update_petted(self, now):
         line = self.arduino.read(1)  # Read 1 byte
         if line:
-           # Decode byte to string and strip whitespace
+            # Decode byte to string and strip whitespace
             self.button_pressed = line.decode()
-            
+
         if self.button_pressed == "1":
             self.petted_start = now
 
@@ -64,7 +70,7 @@ class StateManager:
         else:
             self.run_signals["run_petted"] = 0
             self.eye_state = random.choice(["happy", "heart", "sparkle"])
-            
+
     def update_melody(self, now):
         self.heard_melody = self.audio_collector.detect_melody()
         if self.heard_melody:
@@ -104,19 +110,18 @@ class StateManager:
             self.sleep_start = now
 
         if (
-            self.sleep_start is not None
-            and now - self.sleep_start <= 2
+            self.sleep_start is not None and now - self.sleep_start <= 2
         ):  # 2 second wake up delay
             self.run_signals["run_sleep"] = 1
         else:
-            self.run_signals["run_sleep"] = 0        
+            self.run_signals["run_sleep"] = 0
 
     def update_signal(self, now):
         self.update_petted(now)
         self.update_melody(now)
         self.update_word_command(now)
         self.update_sleep(now)
-        
+
         self.run_signal = 0
         for state, signal in self.run_signals.items():
             if signal == 1:
