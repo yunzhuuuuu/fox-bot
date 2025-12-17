@@ -5,33 +5,36 @@
 # Byte 0&1 = Speed to set left&right motors to (-127)-(128)(byte)
 # Byte 2 = Servo angle for ears 0-180(byte), mirrored.
 #    face forward: 90, inside: decrease, outside: increase
-# Byte 3 = Servo angle for the tail 0-180(byte)
+# Byte 3 = Servo angle for the tail 0-120(byte)
 # Byte 4 = Brightness of the eyes (0-1)
 # Bytes 5-12 = Array for the left eye
 # Bytes 13-20 = Array for the right eye
 
 
-import time
 import struct
 import math
-
+from enum import Enum
 import robot.software.eye_display as eye_display
 from robot.software.berry_detection import BerryDetection
-from robot.software.behavior_manager import StateManager
 
+class Parameters(Enum):
+    TAIL_LOW = 0
+    TAIL_HIGH = 120
+    TAIL_MID = 60
+    TAIL_DEFAULT = 100
+    EAR_LOW = 90
+    EAR_HIGH = 180
+    EAR_DEFAULT = 140
 
 class RobotBehaviors:
 
     def __init__(self, manager):
-        # WHEEL_CIRCUMFERENCE = 8.482  # inches
-        # BETWEEN_WHEELS = 6  # inches TODO: get actual measurement
 
         # initialize robot components
         self.left_speed = 0  # 0–255
         self.right_speed = 0  # 0–255
-        # self.spin = 180  # 0–360
-        self.ear = 90  # 0–180
-        self.tail = 120  # 0–180
+        self.ear = Parameters.EAR_DEFAULT  # 0–180
+        self.tail = Parameters.TAIL_DEFAULT  # 0–120
         self.eye_brightness = 1  # for formatting
         self.left_eye = eye_display.EyeDisplay()
         self.right_eye = eye_display.EyeDisplay()
@@ -91,7 +94,7 @@ class RobotBehaviors:
         # [0]   left motor  (0-255, reformatted from -127-128)
         # [1]   right motor (0-255, reformatted from -127-128)
         # [2]   ear servo   (0-180)
-        # [3]   tail servo  (0-180)
+        # [3]   tail servo  (0-120)
         # [4]   eye brightness (0-1 → scaled to 0–255)
         # [5-12]   left eye  8 bytes
         # [13-20]  right eye 8 bytes
@@ -116,17 +119,17 @@ class RobotBehaviors:
         self.left_speed = max(0, self.left_speed - 2)
         self.right_speed = max(0, self.right_speed - 2)
 
-        if self.ear < 90:
-            self.ear = min(self.ear + 2, 90)
-        elif self.ear > 90:
-            self.ear = max(self.ear - 2, 90)
+        if self.ear < Parameters.EAR_DEFAULT:
+            self.ear = min(self.ear + 2, Parameters.EAR_DEFAULT)
+        elif self.ear > Parameters.EAR_DEFAULT:
+            self.ear = max(self.ear - 2, Parameters.EAR_DEFAULT)
         self.ear = max(0, min(180, self.ear))
 
-        if self.tail < 120:
-            self.tail = min(self.tail + 2, 120)
-        elif self.tail > 120:
-            self.tail = max(self.tail - 2, 120)
-        self.tail = max(0, min(180, self.tail))
+        if self.tail < Parameters.TAIL_DEFAULT:
+            self.tail = min(self.tail + 2, Parameters.TAIL_DEFAULT)
+        elif self.tail > Parameters.TAIL_DEFAULT:
+            self.tail = max(self.tail - 2, Parameters.TAIL_DEFAULT)
+        self.tail = max(Parameters.TAIL_LOW, min(Parameters.TAIL_HIGH, self.tail))
 
         self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
@@ -136,27 +139,27 @@ class RobotBehaviors:
         self.tail += speed * self._wag_direction
 
         # Reverse at bounds
-        if self.tail >= 90 + offset:
-            self.tail = 90 + offset
+        if self.tail >= Parameters.TAIL_MID + offset:
+            self.tail = Parameters.TAIL_MID + offset
             self._wag_direction = -1
-        elif self.tail <= 90 - offset:
-            self.tail = 90 - offset
+        elif self.tail <= Parameters.TAIL_MID - offset:
+            self.tail = Parameters.TAIL_MID - offset
             self._wag_direction = 1
 
     def mad(self, offset=15):
         """
         Straight tail, closed eye, wiggle ears
         """
-        self.tail = 90
+        self.tail = Parameters.TAIL_MID
         self.left_eye.set_state(self.left_eye.angry_left)
         self.right_eye.set_state(self.right_eye.angry_right)
 
         self.ear += 4 * self._ear_direction
-        if self.ear >= 90 + offset:
-            self.ear = 90 + offset
+        if self.ear >= Parameters.EAR_DEFAULT + offset:
+            self.ear = Parameters.EAR_DEFAULT + offset
             self._wag_direction = -1
-        elif self.ear <= 90 - offset:
-            self.ear = 90 - offset
+        elif self.ear <= Parameters.EAR_DEFAULT - offset:
+            self.ear = Parameters.EAR_DEFAULT - offset
             self._wag_direction = 1
 
     def blink(self, elapsed):
@@ -176,10 +179,10 @@ class RobotBehaviors:
             self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
         if elapsed < 2:
-            self.ear = max(0, self.ear - 1)
+            self.ear = max(Parameters.EAR_LOW, self.ear - 1)
 
         elif elapsed < 5:
-            self.ear = min(180, self.ear + 1)
+            self.ear = min(Parameters.EAR_HIGH, self.ear + 1)
             
     def sleep(self):
         """
@@ -190,8 +193,8 @@ class RobotBehaviors:
         """
         self.left_speed = 0
         self.right_speed = 0
-        self.ear = max(0, self.ear - 2)
-        self.tail = min(180, self.tail + 3)
+        self.ear = max(Parameters.EAR_LOW, self.ear - 2)
+        self.tail = min(Parameters.TAIL_HIGH, self.tail + 3)
         self.left_eye.set_state(self.left_eye.sleeping)
         self.right_eye.set_state(self.right_eye.sleeping)
 
@@ -208,14 +211,14 @@ class RobotBehaviors:
         """
         # record the time it starts
         if not hasattr(self, "_frame_index"):
-            self.tail = 45
+            self.tail = Parameters.TAIL_LOW
             self._frame_index = 0
             self._last_frame_time = 6
 
         # Phase 0: Tail wags
         if elapsed < 0.5:
             # move fast to one side
-            if self.tail <= 150:
+            if self.tail <= Parameters.TAIL_HIGH:
                 self.tail += 8
 
         # Phase 1: Look at tail
@@ -232,7 +235,7 @@ class RobotBehaviors:
             self.left_speed = 60
             self.right_speed = -60
             # tail starts to move in opposite direction, stops when angle=60
-            self.tail = max(60, self.tail - 2)
+            self.tail = max(30, self.tail - 2)
 
         # Phase 3: Dizzy animation
         elif elapsed < 9:
@@ -318,7 +321,7 @@ class RobotBehaviors:
             self.right_eye.set_state(self.right_eye.sparkle_right)
 
         self.wag_tail(speed=1)
-        self.ear = 0
+        self.ear = Parameters.EAR_LOW
 
     def look_for_treat(self, elapsed):
         """

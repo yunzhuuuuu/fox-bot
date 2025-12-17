@@ -115,7 +115,8 @@ class StateManager:
         self.update_petted(now)
         self.update_melody(now)
         self.update_word_command(now)
-
+        self.update_sleep(now)
+        
         self.run_signal = 0
         for state, signal in self.run_signals.items():
             if signal == 1:
