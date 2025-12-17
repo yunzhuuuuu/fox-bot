@@ -16,7 +16,7 @@ class CollectAudio:
     MELODY = np.array(["A4", "A♯4", "G4", "A4", "D4", "A4", "F4", "C5"])
 
     def __init__(self):
-        self.saved_notes = []
+        self.num_correct_notes = 0
 
         self.p = pyaudio.PyAudio()
         self.frames = []
@@ -46,19 +46,21 @@ class CollectAudio:
 
         self.p.terminate()
 
-    def detect_melody(self, save_interval=2):
+    def detect_melody(self, save_interval=2, max_incorrect_notes=-1):
         """
         Save audio if more than 2 seconds has passed since the last save, and detect notes
 
         Args:
-            save_interval (Int) (optional): Number of seconds between each save
+            save_interval (Int) (optional): Number of seconds between each save (defaults to 2)
+            max_incorrect_notes (Int) (optional): Maximum number of incorrect notes that can be
+                between correct notes. If -1, then there is no limit to incorrect notes. Defaults
+                to -1
 
         Returns:
             Boolean: Whether or not the notes match the set melody
         """
+        is_melody = False
         if time.time() - self.last_sample >= save_interval:
-
-            is_melody = False
 
             media_dir = os.path.join(os.path.dirname(__file__), "..", "..", "media")
             audio_path = os.path.join(media_dir, "output.wav")
@@ -70,26 +72,45 @@ class CollectAudio:
 
             y, sr = pf.load_audio("output.wav")
             f0 = pf.estimate_pitch(y, sr)
-            if len(f0) != 0:
-                notes = pf.pitch_to_note(f0, min_instances=3)
-                # remove duplicate if last note of saved and 1st note of new list are the same
-                if (
-                    len(self.saved_notes) != 0
-                    and len(notes) != 0
-                    and self.saved_notes[-1] == notes[0]
-                ):
-                    notes = notes[1:]
+            if len(f0) != 0:  # if there are detected pitches
+                notes = pf.pitch_to_note(f0, min_instances=2)
+                print(notes)
 
-                self.saved_notes.extend(notes)
-                print(str(self.saved_notes).encode("utf-8"))
-                # print(str(notes).encode("utf-8"))
+                while True:
+                    next_note: str = CollectAudio.MELODY[self.num_correct_notes]
+                    try:
+                        index_of_note: int = notes.index(next_note)
+                    except ValueError:  # next correct note was not found
+                        break
 
-                is_melody = pf.check_melody(self.saved_notes, CollectAudio.MELODY)
-                print(is_melody)
-                if is_melody:
-                    self.saved_notes = []
+                    # note exists and there's not that many incorrect notes, or ignore incorrect notes if -1
+                    if (
+                        index_of_note <= max_incorrect_notes
+                        or max_incorrect_notes == -1
+                    ):
+                        self.num_correct_notes += 1  # increment correct notes
+                        notes = notes[
+                            index_of_note + 1 :
+                        ]  # cut off already used part of notes array
+                        if self.num_correct_notes == len(
+                            CollectAudio.MELODY
+                        ):  # if entire melody is there
+                            self.num_correct_notes = 0  # reset correct notes
+                            is_melody = True
+                            break
+
+                # number of correct notes so far & list of new notes
+                # while (something):
+                #     look at supposed next note
+                #     find first instance of it in new notes
+                #     if it exists & is within the first _ elements:
+                #         increment saved notes
+                #         cut off those elements of new note list
+                #         if number of saved notes == total notes:
+                #             detected melody!
+                #             reset saved notes to 0
 
             self.last_sample = time.time()
             self.frames = []
 
-            return is_melody
+        return is_melody
