@@ -254,7 +254,7 @@ class RobotBehaviors:
 
         # Phase 4: Blink twice
         elif elapsed < 10:
-            if int(str(elapsed)[1]) == 2 or int(str(elapsed)[1]) == 6:
+            if int(str(elapsed)[2]) == 2 or int(str(elapsed)[2]) == 6:
                 self.left_eye.set_state(self.left_eye.blink)
                 self.right_eye.set_state(self.right_eye.blink)
             else:
