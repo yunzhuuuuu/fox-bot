@@ -13,11 +13,12 @@
 
 import struct
 import math
-from enum import Enum
+from enum import IntEnum
 import robot.software.eye_display as eye_display
 from robot.software.berry_detection import BerryDetection
 
-class Parameters(Enum):
+
+class Parameters(IntEnum):
     TAIL_LOW = 0
     TAIL_HIGH = 120
     TAIL_MID = 60
@@ -25,6 +26,7 @@ class Parameters(Enum):
     EAR_LOW = 90
     EAR_HIGH = 180
     EAR_DEFAULT = 140
+
 
 class RobotBehaviors:
 
@@ -134,7 +136,7 @@ class RobotBehaviors:
         self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
-    def wag_tail(self, offset=45, speed=4):
+    def wag_tail(self, offset=45, speed=6):
         # change tail speed by '2' in given direction
         self.tail += speed * self._wag_direction
 
@@ -183,7 +185,7 @@ class RobotBehaviors:
 
         elif elapsed < 5:
             self.ear = min(Parameters.EAR_HIGH, self.ear + 1)
-            
+
     def sleep(self):
         """
         Sleep behavior:
