@@ -22,9 +22,6 @@ class StateManager:
         self.run_signals = {
             "run_petted": 0,
             "run_look_for_treat": 0,
-            # "run_spin": 0,
-            # "run_circle": 0,
-            # "run_square": 0,
             "run_sleep": 0,
         }
 
@@ -86,24 +83,23 @@ class StateManager:
         else:
             self.run_signals["run_look_for_treat"] = 0
 
-    def update_word_command(self, now):
-        # new_command = self.word_detector.read_cmd()
-        new_command = None
+    # def update_word_command(self, now):
+    #     new_command = self.word_detector.read_cmd()
 
-        if new_command is not None:
-            self.command = new_command
-            self.word_command_start = now
+    #     if new_command is not None:
+    #         self.command = new_command
+    #         self.word_command_start = now
 
-        if self.command is not None and now - self.word_command_start <= 10:
-            self.run_signals["run_spin"] = 1 if self.command == "spin" else 0
-            self.run_signals["run_circle"] = 1 if self.command == "circle" else 0
-            self.run_signals["run_square"] = 1 if self.command == "square" else 0
+    #     if self.command is not None and now - self.word_command_start <= 10:
+    #         self.run_signals["run_spin"] = 1 if self.command == "spin" else 0
+    #         self.run_signals["run_circle"] = 1 if self.command == "circle" else 0
+    #         self.run_signals["run_square"] = 1 if self.command == "square" else 0
 
-        else:
-            self.run_signals["run_spin"] = 0
-            self.run_signals["run_circle"] = 0
-            self.run_signals["run_square"] = 0
-            self.command = None
+    #     else:
+    #         self.run_signals["run_spin"] = 0
+    #         self.run_signals["run_circle"] = 0
+    #         self.run_signals["run_square"] = 0
+    #         self.command = None
 
     def update_sleep(self, now):
         self.dark = self.berry_detection.get_darkness()
@@ -121,7 +117,7 @@ class StateManager:
     def update_signal(self, now):
         self.update_petted(now)
         self.update_melody(now)
-        self.update_word_command(now)
+        # self.update_word_command(now)
         self.update_sleep(now)
 
         self.run_signal = 0

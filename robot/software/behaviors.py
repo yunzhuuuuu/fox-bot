@@ -65,12 +65,6 @@ class RobotBehaviors:
             case "run_look_for_treat":
                 elapsed = self.manager.now - self.manager.look_for_treat_start
                 self.behavior = lambda: self.look_for_treat(elapsed)
-            case "run_spin":
-                self.behavior = self.spin
-            case "run_circle":
-                self.behavior = self.circle
-            case "run_square":
-                self.behavior = self.square
             case "run_sleep":
                 self.behavior = self.sleep
             case "blink":
