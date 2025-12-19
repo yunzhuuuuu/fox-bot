@@ -46,3 +46,23 @@ class WordDetection:
 #     if cmd == 'spin':
 #         print('set run_spin to high')
 #     time.sleep(0.02)
+
+
+
+# def update_word_command(self, now):
+#     new_command = self.word_detector.read_cmd()
+
+#     if new_command is not None:
+#         self.command = new_command
+#         self.word_command_start = now
+
+#     if self.command is not None and now - self.word_command_start <= 10:
+#         self.run_signals["run_spin"] = 1 if self.command == "spin" else 0
+#         self.run_signals["run_circle"] = 1 if self.command == "circle" else 0
+#         self.run_signals["run_square"] = 1 if self.command == "square" else 0
+
+#     else:
+#         self.run_signals["run_spin"] = 0
+#         self.run_signals["run_circle"] = 0
+#         self.run_signals["run_square"] = 0
+#         self.command = None

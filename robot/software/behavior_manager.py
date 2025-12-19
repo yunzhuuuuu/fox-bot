@@ -1,6 +1,5 @@
 import time
 import random
-
 from robot.software.berry_detection import BerryDetection
 from robot.software.audio_processing import CollectAudio
 
@@ -8,20 +7,23 @@ from robot.software.audio_processing import CollectAudio
 class StateManager:
 
     def __init__(self, arduino):
+        """
+        Manages robot states and behavior signals based on input signals
+        Handles prioritization of behaviors and idle behavior loop.
+        """
         self.berry_detection = BerryDetection()
         self.audio_collector = CollectAudio()
         self.arduino = arduino
 
-        # if run_signal is 1, the robot should be doing this behavior, if 0, it should not
-        # ideally only one of them should be 1, but if there's more than 1 active signals,
-        # the signals closer to the beginning of the dict has higher priority to happen
-        # higher priority behavior interrupts lower priority ones
+        # Run signals: 1 = active, 0 = inactive
+        # Priority is order in dict (earlier = higher priority)
         self.run_signals = {
             "run_petted": 0,
             "run_look_for_treat": 0,
             "run_sleep": 0,
         }
 
+        # Idle behaviors and durations
         self.idles = ["chase_tail", "wag_tail", "blink", "look_around"]
         self.idle_duration = {
             "chase_tail": 10,
@@ -34,21 +36,24 @@ class StateManager:
         self.run_signal = 0
         self.state = "default"
 
+        # Input / behavior tracking
         self.button_pressed = False
         self.heard_melody = False
         self.dark = False
-        self.command = None
+
+        # Timing tracking
         self.now = None
         self.default_start = None
         self.idle_start = None
         self.petted_start = None
-        self.eye_state = "happy"  # default eye state when petted
         self.look_for_treat_start = None
-        self.word_command_start = None
         self.sleep_start = None
+
+        self.eye_state = "happy"  # default eye state when petted
         self.chase_tail_phase = 0
 
     def update_petted(self, now):
+        """Check button press and update petted behavior."""
         line = self.arduino.read(1)  # Read 1 byte
         if line:
             # Decode byte to string and strip whitespace
@@ -68,6 +73,7 @@ class StateManager:
             self.eye_state = random.choice(["happy", "squint"])
 
     def update_melody(self, now):
+        """Check for melody detection and update look for treat behavior."""
         self.heard_melody = self.audio_collector.detect_melody()
         if self.heard_melody:
             self.look_for_treat_start = now
@@ -80,25 +86,8 @@ class StateManager:
         else:
             self.run_signals["run_look_for_treat"] = 0
 
-    # def update_word_command(self, now):
-    #     new_command = self.word_detector.read_cmd()
-
-    #     if new_command is not None:
-    #         self.command = new_command
-    #         self.word_command_start = now
-
-    #     if self.command is not None and now - self.word_command_start <= 10:
-    #         self.run_signals["run_spin"] = 1 if self.command == "spin" else 0
-    #         self.run_signals["run_circle"] = 1 if self.command == "circle" else 0
-    #         self.run_signals["run_square"] = 1 if self.command == "square" else 0
-
-    #     else:
-    #         self.run_signals["run_spin"] = 0
-    #         self.run_signals["run_circle"] = 0
-    #         self.run_signals["run_square"] = 0
-    #         self.command = None
-
     def update_sleep(self, now):
+        """Check darkness and update sleep behavior."""
         self.dark = self.berry_detection.get_darkness()
         # 1 if dark environment, 0 if not
         if self.dark:
@@ -112,6 +101,10 @@ class StateManager:
             self.run_signals["run_sleep"] = 0
 
     def update_signal(self, now):
+        """
+        Update all run signals and set current active behavior.
+        Their order in the list matters of more than 1 happens the same time.
+        """
         self.update_petted(now)
         self.update_melody(now)
         # self.update_word_command(now)
@@ -125,6 +118,11 @@ class StateManager:
                 break  # once find an active signal, stop enumerating
 
     def update_state(self):
+        """
+        Main state update loop:
+        - Updates current time and signals
+        - Chooses active behavior or idle/default loop
+        """
         self.now = time.time()
         # update incoming signals and run corresponding active behavior
         self.update_signal(self.now)

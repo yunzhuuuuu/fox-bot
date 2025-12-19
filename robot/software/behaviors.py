@@ -1,15 +1,9 @@
-# combines all robot components behavior for the idle state
-
-# return array:
-# Serial Data format: (21 byte packet)
-# Byte 0&1 = Speed to set left&right motors to (-127)-(128)(byte)
-# Byte 2 = Servo angle for ears 0-180(byte), mirrored.
-#    face forward: 90, inside: decrease, outside: increase
-# Byte 3 = Servo angle for the tail 0-120(byte)
-# Byte 4 = Brightness of the eyes (0-1)
-# Bytes 5-12 = Array for the left eye
-# Bytes 13-20 = Array for the right eye
-
+"""
+Class for tracking and updating robot behaviors that handles:
+- Motor speed, servo positions, eye display animations
+- What to do when behaviors happen (wag tail, chase tail, blink, sleep)
+- Converting high-level behaviors into a 21-byte packet format expected by the Arduino
+"""
 
 import struct
 import math
@@ -31,6 +25,7 @@ class Parameters(IntEnum):
 
 
 class RobotBehaviors:
+    """Controls robot behaviors, motion, and animations."""
 
     def __init__(self, manager):
 
@@ -58,6 +53,7 @@ class RobotBehaviors:
         self._right_rotate_frames = self.right_eye.eye_rotate(0)  # counterclock
 
     def update_behavior(self):
+        """Update the current behavior based on the robot's state."""
         self.state = self.manager.state
         match self.state:
             case "run_petted":
@@ -83,18 +79,19 @@ class RobotBehaviors:
 
     def build_packet(self):
         """
-        Returns 21-byte format Arduino expects:
-        <bb B B B 8s 8s>
-        L  R  ear  tail  bright  leftEye  rightEye
+        <BB B B B 8s 8s>
+        leftMotor rightMotor ear tail bright leftEye rightEye
         """
         # pack:
-        # [0]   left motor  (0-255, reformatted from -127-128)
-        # [1]   right motor (0-255, reformatted from -127-128)
-        # [2]   ear servo   (0-180)
-        # [3]   tail servo  (0-120)
-        # [4]   eye brightness (0-1 → scaled to 0–255)
-        # [5-12]   left eye  8 bytes
-        # [13-20]  right eye 8 bytes
+        # Serial Data format: (21 byte packet)
+        # Byte 0&1 = Speed to set left&right motors to (-127)-(128)(byte)
+        # Byte 2 = Servo angle for ears 0-180(byte), mirrored.
+        #    face forward: 90, inside: decrease, outside: increase
+        # Byte 3 = Servo angle for the tail 0-120(byte)
+        # Byte 4 = Brightness of the eyes (0-1)
+        # Bytes 5-12 = Array for the left eye
+        # Bytes 13-20 = Array for the right eye
+
         return struct.pack(
             "<BBBBB8B8B",
             int(self.left_speed + 127),
@@ -138,6 +135,9 @@ class RobotBehaviors:
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
     def wag_tail(self, offset=45, speed=6):
+        """
+        Move tail back and forth.
+        """
         # change tail speed by 'speed' in given direction
         self.tail += speed * self._wag_direction
 
@@ -151,7 +151,7 @@ class RobotBehaviors:
 
     def mad(self, offset=15):
         """
-        Straight tail, closed eye, wiggle ears
+        Straight tail, angry eye, wiggling ears
         """
         self.tail = Parameters.TAIL_MID
         self.left_eye.set_state(self.left_eye.angry_left)
@@ -208,7 +208,8 @@ class RobotBehaviors:
         - 1. look at its tail
         - 2. spin to the right, tail moves to the left
         - 3. tail out of sight, gets dizzy
-        - 4. cleanup and return to idle
+        - 4. blink
+        - 5. clean up
 
         need to test on robot and adjust all angles and time
         """
@@ -218,7 +219,7 @@ class RobotBehaviors:
             self._frame_index = 0
             self._last_frame_time = 6
 
-        # Phase 0: Tail wags
+        # Phase 0: Tail swings
         if elapsed < 0.5:
             # move fast to one side
             if self.tail <= Parameters.TAIL_HIGH:
@@ -264,7 +265,7 @@ class RobotBehaviors:
                 self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
                 self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
-        # Phase 4: End behavior
+        # Phase 5: End behavior
         else:
             del self._frame_index
             del self._last_frame_time
@@ -274,12 +275,6 @@ class RobotBehaviors:
     def wiggle(self, elapsed):
         """
         Changes left and right motor speeds to wiggle
-
-        Args:
-            elapsed (number): Time since outer behavior started, in seconds
-
-        Returns:
-            None
         """
 
         if math.floor(elapsed) % 2 == 0:  # even number of seconds elapsed
