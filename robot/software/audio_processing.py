@@ -2,9 +2,53 @@ import time
 import wave
 import os
 import pyaudio
-import robot.software.audio_processing.pitch_finder as pf
 import numpy as np
 import sounddevice
+import librosa
+
+
+def load_audio(filename: str):
+    """Return waveform (y) and sampling rate (sr) from a file in the current directory."""
+    MEDIA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "media")
+    audio_path = os.path.join(MEDIA_DIR, filename)
+    y, sr = librosa.load(audio_path)
+    # print(sr)
+    print("loading and analyzing audio")
+    return y, sr
+
+
+def estimate_pitch(y, sr, fmin_note="C3", fmax_note="C7"):
+    """
+    Estimate fundamental frequency (f0) using probabilistic YIN.
+    Return an array of all recognized frequences.
+    """
+    f0, voiced_flag, _ = librosa.pyin(
+        y, fmin=librosa.note_to_hz(fmin_note), fmax=librosa.note_to_hz(fmax_note)
+    )
+    return f0[voiced_flag]
+
+
+def pitch_to_note(f0, min_instances=5):
+    """
+    Convert an array of fundamental frequencies (f0) to musical note names,
+    keeping only notes that appear consecutively at least a certain amount of times.
+    """
+    notes = librosa.hz_to_note(f0)
+    cleaned_notes = []
+    count = 1
+
+    for i in range(1, len(notes)):
+        if notes[i] == notes[i - 1]:
+            count += 1
+        else:
+            if count >= min_instances:
+                cleaned_notes.append(str(notes[i - 1]))
+            count = 1
+    # Handle last sequence
+    if count >= min_instances:
+        cleaned_notes.append(str(notes[-1]))
+
+    return cleaned_notes
 
 
 class CollectAudio:
@@ -70,10 +114,10 @@ class CollectAudio:
                 wf.setframerate(CollectAudio.RATE)
                 wf.writeframes(b"".join(self.frames))
 
-            y, sr = pf.load_audio("output.wav")
-            f0 = pf.estimate_pitch(y, sr)
+            y, sr = load_audio("output.wav")
+            f0 = estimate_pitch(y, sr)
             if len(f0) != 0:  # if there are detected pitches
-                notes = pf.pitch_to_note(f0, min_instances=2)
+                notes = pitch_to_note(f0, min_instances=2)
                 print(notes)
 
                 while True:
@@ -98,17 +142,6 @@ class CollectAudio:
                             self.num_correct_notes = 0  # reset correct notes
                             is_melody = True
                             break
-
-                # number of correct notes so far & list of new notes
-                # while (something):
-                #     look at supposed next note
-                #     find first instance of it in new notes
-                #     if it exists & is within the first _ elements:
-                #         increment saved notes
-                #         cut off those elements of new note list
-                #         if number of saved notes == total notes:
-                #             detected melody!
-                #             reset saved notes to 0
 
             self.last_sample = time.time()
             self.frames = []

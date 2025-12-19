@@ -1,6 +1,5 @@
 import socket
 import time
-import robot.software.audio_processing.pitch_finder as pf
 from robot.software.behaviors import RobotBehaviors
 
 # Setup[]

@@ -62,30 +62,3 @@ def check_melody(notes, melody):
         if np.array_equal(notes[i : i + len(melody)], melody):
             return True
     return False
-
-
-def run_pitch_finder(audio_path, min_instances=5):
-    """
-    High-level wrapper that loads audio, detects pitch, and checks melody.
-
-    Args:
-        audio_path (String): Filepath leading to wav file
-        min_instances (int): Minimum times a note has to appear to be taken into account in the
-            melody. Defaults to 5.
-
-    Returns:
-        Boolean: True if certain melody is found, otherwise false
-    """
-
-    y, sr = load_audio(audio_path)
-    f0 = estimate_pitch(y, sr)
-    # print(f0)
-    notes = pitch_to_note(f0, min_instances)
-    print(notes)
-    is_melody = check_melody(notes, melody)
-    print(is_melody)
-    return is_melody
-
-
-# if __name__ == "__main__":
-#     run_pitch_finder("output_audio.wav", 8)
