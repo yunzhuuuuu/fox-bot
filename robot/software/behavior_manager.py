@@ -2,16 +2,13 @@ import time
 import random
 
 from robot.software.berry_detection import BerryDetection
-
-# from robot.software.audio_processing.word_detection import WordDetection
-from robot.software.audio_processing.callback_audio import CollectAudio
+from robot.software.audio_processing import CollectAudio
 
 
 class StateManager:
 
     def __init__(self, arduino):
         self.berry_detection = BerryDetection()
-        # self.word_detector = WordDetection()
         self.audio_collector = CollectAudio()
         self.arduino = arduino
 

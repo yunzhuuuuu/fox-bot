@@ -29,6 +29,7 @@ class Parameters(IntEnum):
     SPEED_LOW = 30
     SPEED_HIGH = 45
 
+
 class RobotBehaviors:
 
     def __init__(self, manager):
@@ -41,7 +42,6 @@ class RobotBehaviors:
         self.eye_brightness = 1  # for formatting
         self.left_eye = eye_display.EyeDisplay()
         self.right_eye = eye_display.EyeDisplay()
-        # self.eye = [0] * 64  # eye array (8 bytes)
         self.left_eye.set_state(self.left_eye.eye_with_position((1, 1)))
         self.right_eye.set_state(self.right_eye.eye_with_position((2, 1)))
 
@@ -85,7 +85,7 @@ class RobotBehaviors:
         """
         Returns 21-byte format Arduino expects:
         <bb B B B 8s 8s>
-        L  R  ear tail bright  leftEye  rightEye
+        L  R  ear  tail  bright  leftEye  rightEye
         """
         # pack:
         # [0]   left motor  (0-255, reformatted from -127-128)
@@ -243,7 +243,7 @@ class RobotBehaviors:
         # Phase 3: Dizzy animation
         elif elapsed < 9:
             self.left_speed = 0
-            self.right_speed = 0          
+            self.right_speed = 0
             # Change frames every 0.1s
             if elapsed - self._last_frame_time > 0.1:
                 self._last_frame_time += 0.1
